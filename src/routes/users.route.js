@@ -2,10 +2,6 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/users');
 
-// Auth routes
-router.post('/register', userController.register);
-router.post('/login', userController.login);
-
 // CRUD routes
 router.get('/', userController.getUsers);
 router.get('/:id', userController.getUserById);
