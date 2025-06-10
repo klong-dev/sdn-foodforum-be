@@ -21,8 +21,15 @@ exports.getUserById = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
     try {
-        const updatedUser = await userService.updateUser(req.params.id, req.body);
-        if (!updatedUser) return res.status(404).json({ error: 'User not found' });
+        // Get the current user first
+        const currentUser = await userService.getUserById(req.params.id);
+        if (!currentUser) return res.status(404).json({ error: 'User not found' });
+
+        // Merge existing user data with the updates from the request body
+        const userData = { ...currentUser.toObject(), ...req.body };
+
+        // Update with merged data
+        const updatedUser = await userService.updateUser(req.params.id, userData);
         res.json(updatedUser);
     } catch (error) {
         res.status(400).json({ error: error.message });

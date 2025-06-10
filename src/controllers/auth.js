@@ -20,7 +20,6 @@ exports.login = async (req, res) => {
         res.json({
             message: 'Login successful',
             token,
-            user
         });
     } catch (error) {
         if (error.message === 'User not found') {
