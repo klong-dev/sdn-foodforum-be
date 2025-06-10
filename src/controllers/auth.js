@@ -27,7 +27,7 @@ exports.login = async (req, res) => {
 
         res.json({
             message: 'Login successful',
-            token: accessToken
+            accessToken: accessToken
         });
     } catch (error) {
         if (error.message === 'User not found') {
@@ -51,9 +51,10 @@ exports.refreshToken = async (req, res) => {
 
         res.json({
             message: 'Token refreshed successfully',
-            token: accessToken
+            refreshToken: accessToken
         });
     } catch (error) {
+        console.error('Refresh token error:', error);
         res.status(401).json({ error: 'Invalid refresh token' });
     }
 };

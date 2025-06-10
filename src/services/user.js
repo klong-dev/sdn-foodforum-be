@@ -24,13 +24,11 @@ exports.authenticateUser = async (email, password) => {
     // Extract user role for token
     const role = user.role || 'user'; // Default to 'user' if role is undefined
 
-    // Generate access token with user ID and role included
+    // Generate access token with user ID and role included (without permissions)
     const accessToken = jwt.sign(
         {
             id: user._id,
-            role: role,
-            // Add permissions based on role
-            permissions: getRolePermissions(role)
+            role: role
         },
         process.env.JWT_SECRET,
         { expiresIn: '15m' }
@@ -50,93 +48,6 @@ exports.authenticateUser = async (email, password) => {
     };
 };
 
-// Helper function to determine permissions based on role
-function getRolePermissions(role) {
-    switch (role) {
-        case 'admin':
-            return [
-                // User management
-                'user:read',
-                'user:write',
-                'user:delete',
-                'user:roles:manage',
-                'user:lock',
-
-                // Content management
-                'post:read',
-                'post:write',
-                'post:delete:any',
-                'post:approve',
-                'comment:read',
-                'comment:write',
-                'comment:delete:any',
-
-                // Forum management
-                'category:manage',
-                'announcement:manage',
-                'rule:manage',
-                'report:view',
-                'report:resolve',
-
-                // Admin features
-                'admin:dashboard',
-                'admin:logs',
-                'admin:stats'
-            ];
-
-        case 'moderator':
-            return [
-                // Limited user access
-                'user:read',
-
-                // Content moderation
-                'post:read',
-                'post:write',
-                'post:delete:any',
-                'post:approve',
-                'comment:read',
-                'comment:write',
-                'comment:delete:any',
-                'discussion:lock',
-
-                // Forum management
-                'category:manage',
-                'announcement:manage',
-                'rule:manage',
-                'report:view',
-                'report:resolve'
-            ];
-
-        case 'user':
-            return [
-                // Profile management
-                'profile:edit:own',
-
-                // Content creation
-                'post:read',
-                'post:write',
-                'post:edit:own',
-                'post:delete:own',
-                'comment:read',
-                'comment:write',
-                'comment:edit:own',
-                'comment:delete:own',
-                'comment:close:own',
-
-                // Interaction
-                'vote:create',
-                'favorite:create',
-                'report:create'
-            ];
-
-        default: // Guest
-            return [
-                'post:read',
-                'comment:read',
-                'user:profile:view'
-            ];
-    }
-}
 
 // Add new method for token refresh
 exports.refreshAccessToken = async (refreshToken) => {
@@ -149,12 +60,12 @@ exports.refreshAccessToken = async (refreshToken) => {
     // Extract role for token
     const role = user.role || 'user';
 
-    // Generate new access token with role and permissions
+    // Generate new access token with role 
     const accessToken = jwt.sign(
         {
             id: user._id,
-            role: role,
-            permissions: getRolePermissions(role)
+            role: role
+            // Removed permissions reference that was causing errors
         },
         process.env.JWT_SECRET,
         { expiresIn: '15m' }
