@@ -21,9 +21,17 @@ exports.authenticateUser = async (email, password) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new Error('Invalid credentials');
 
-    // Generate access token (short-lived)
+    // Extract user role for token
+    const role = user.role || 'user'; // Default to 'user' if role is undefined
+
+    // Generate access token with user ID and role included
     const accessToken = jwt.sign(
-        { id: user._id, role: user.role },
+        {
+            id: user._id,
+            role: role,
+            // Add permissions based on role
+            permissions: getRolePermissions(role)
+        },
         process.env.JWT_SECRET,
         { expiresIn: '15m' }
     );
@@ -32,7 +40,6 @@ exports.authenticateUser = async (email, password) => {
     const refreshToken = uuidv4();
 
     // Store refresh token in Redis with user ID as value
-    // set expiration in the same call
     const redisKey = `refresh_token:${refreshToken}`;
     await setAsync(redisKey, user._id.toString(), 604800); // 7 days expiry
 
@@ -43,6 +50,94 @@ exports.authenticateUser = async (email, password) => {
     };
 };
 
+// Helper function to determine permissions based on role
+function getRolePermissions(role) {
+    switch (role) {
+        case 'admin':
+            return [
+                // User management
+                'user:read',
+                'user:write',
+                'user:delete',
+                'user:roles:manage',
+                'user:lock',
+
+                // Content management
+                'post:read',
+                'post:write',
+                'post:delete:any',
+                'post:approve',
+                'comment:read',
+                'comment:write',
+                'comment:delete:any',
+
+                // Forum management
+                'category:manage',
+                'announcement:manage',
+                'rule:manage',
+                'report:view',
+                'report:resolve',
+
+                // Admin features
+                'admin:dashboard',
+                'admin:logs',
+                'admin:stats'
+            ];
+
+        case 'moderator':
+            return [
+                // Limited user access
+                'user:read',
+
+                // Content moderation
+                'post:read',
+                'post:write',
+                'post:delete:any',
+                'post:approve',
+                'comment:read',
+                'comment:write',
+                'comment:delete:any',
+                'discussion:lock',
+
+                // Forum management
+                'category:manage',
+                'announcement:manage',
+                'rule:manage',
+                'report:view',
+                'report:resolve'
+            ];
+
+        case 'user':
+            return [
+                // Profile management
+                'profile:edit:own',
+
+                // Content creation
+                'post:read',
+                'post:write',
+                'post:edit:own',
+                'post:delete:own',
+                'comment:read',
+                'comment:write',
+                'comment:edit:own',
+                'comment:delete:own',
+                'comment:close:own',
+
+                // Interaction
+                'vote:create',
+                'favorite:create',
+                'report:create'
+            ];
+
+        default: // Guest
+            return [
+                'post:read',
+                'comment:read',
+                'user:profile:view'
+            ];
+    }
+}
+
 // Add new method for token refresh
 exports.refreshAccessToken = async (refreshToken) => {
     const userId = await getAsync(`refresh_token:${refreshToken}`);
@@ -51,9 +146,16 @@ exports.refreshAccessToken = async (refreshToken) => {
     const user = await User.findById(userId);
     if (!user) throw new Error('User not found');
 
-    // Generate new access token
+    // Extract role for token
+    const role = user.role || 'user';
+
+    // Generate new access token with role and permissions
     const accessToken = jwt.sign(
-        { id: user._id, role: user.role },
+        {
+            id: user._id,
+            role: role,
+            permissions: getRolePermissions(role)
+        },
         process.env.JWT_SECRET,
         { expiresIn: '15m' }
     );
