@@ -15,11 +15,19 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const { token, user } = await userService.authenticateUser(email, password);
+        const { accessToken, refreshToken, user } = await userService.authenticateUser(email, password);
+
+        // Set refresh token as HTTP-only cookie
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days in milliseconds
+        });
 
         res.json({
             message: 'Login successful',
-            token,
+            token: accessToken
         });
     } catch (error) {
         if (error.message === 'User not found') {
@@ -27,6 +35,40 @@ exports.login = async (req, res) => {
         } else if (error.message === 'Invalid credentials') {
             return res.status(401).json({ error: error.message });
         }
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Add refresh token endpoint
+exports.refreshToken = async (req, res) => {
+    try {
+        const refreshToken = req.cookies.refreshToken;
+        if (!refreshToken) {
+            return res.status(401).json({ error: 'Refresh token required' });
+        }
+
+        const { accessToken } = await userService.refreshAccessToken(refreshToken);
+
+        res.json({
+            message: 'Token refreshed successfully',
+            token: accessToken
+        });
+    } catch (error) {
+        res.status(401).json({ error: 'Invalid refresh token' });
+    }
+};
+
+// Add logout endpoint
+exports.logout = async (req, res) => {
+    try {
+        const refreshToken = req.cookies.refreshToken;
+        if (refreshToken) {
+            await userService.logout(refreshToken);
+        }
+
+        res.clearCookie('refreshToken');
+        res.json({ message: 'Logged out successfully' });
+    } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
