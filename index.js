@@ -9,7 +9,6 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configure CORS with credentials
 app.use(cors({
     origin: process.env.CLIENT_URL,
     credentials: true
@@ -22,6 +21,8 @@ app.use(cookieParser()); // Add cookie parser
 // Routes
 const routes = require('./src/routes/index');
 const { connectDB } = require('./src/config/database.config');
+app.use('/', routes);
+
 app.use('/', routes);
 
 // Connect to MongoDB
