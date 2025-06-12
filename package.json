@@ -87,6 +87,7 @@
     "tr46": "^5.1.1",
     "type-is": "^2.0.1",
     "unpipe": "^1.0.0",
+    "uuid": "^11.1.0",
     "vary": "^1.1.2",
     "webidl-conversions": "^7.0.0",
     "whatwg-url": "^14.2.0",

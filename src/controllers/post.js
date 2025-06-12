@@ -2,15 +2,8 @@ const { createPost } = require('../services/post')
 
 const create = async (req, res) => {
     try {
-
-        const post = await createPost({
-
-            user_id: "684a711d4809fcd076b67125",
-            title: "Test 3",
-            content: "ASDASDNASDASD"
-
-        })
-        console.log("Result", post)
+        console.log(req.body)
+        const post = await createPost(req.body)
         if (post) {
             res.status(201).json({
                 message: 'Create Post successfully',
@@ -22,4 +15,4 @@ const create = async (req, res) => {
     }
 }
 
-module.exports = { create }
+module.exports = {create}
