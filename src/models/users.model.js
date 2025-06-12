@@ -22,9 +22,16 @@ const userSchema = new Schema({
     },
     role: {
         type: String,
-        enum: ['user', 'admin'],
+        enum: ['user', 'moderator', 'admin'],
         default: 'user',
     },
 }, { timestamps: true });
+
+userSchema.set('toJSON', {
+    transform: function (doc, ret, options) {
+        delete ret.password;
+        return ret;
+    }
+});
 
 module.exports = mongoose.model('User', userSchema);
