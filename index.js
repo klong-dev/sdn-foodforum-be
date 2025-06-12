@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 
@@ -8,23 +9,24 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const routes = require('./src/routes/index');
-app.use('/', routes);
+// Configure CORS with credentials
+app.use(cors({
+    origin: process.env.CLIENT_URL,
+    credentials: true
+}));
 
-app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser()); // Add cookie parser
+
+// Routes
+const routes = require('./src/routes/index');
+const { connectDB } = require('./src/config/database.config');
+app.use('/', routes);
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-}).then(() => {
-    console.log('Connected to MongoDB');
-}).catch(err => {
-    console.error('MongoDB connection error:', err);
-});
+connectDB();
 
-app.listen(PORT || 3000, () => {
-    console.log(`Server is running on port ${PORT || 3000}`);
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
