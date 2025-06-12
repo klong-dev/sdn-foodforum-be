@@ -23,8 +23,6 @@ const routes = require('./src/routes/index');
 const { connectDB } = require('./src/config/database.config');
 app.use('/', routes);
 
-app.use('/', routes);
-
 // Connect to MongoDB
 connectDB();
 
