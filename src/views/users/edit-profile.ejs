@@ -1,0 +1,69 @@
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Edit Profile</h3>
+                </div>
+                <div class="card-body">
+                    <% if (typeof error !=='undefined' ) { %>
+                        <div class="alert alert-danger" role="alert">
+                            <%= error %>
+                        </div>
+                        <% } %>
+                            <% if (typeof success !=='undefined' ) { %>
+                                <div class="alert alert-success" role="alert">
+                                    <%= success %>
+                                </div>
+                                <% } %>
+
+                                    <form action="/users/edit-profile" method="POST">
+                                        <div class="mb-3">
+                                            <label for="username" class="form-label">Username</label>
+                                            <input type="text" class="form-control" id="username" name="username"
+                                                value="<%= user.username %>" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="email" class="form-label">Email</label>
+                                            <input type="email" class="form-control" id="email" name="email"
+                                                value="<%= user.email %>" required>
+                                        </div>
+
+                                        <hr class="my-4">
+
+                                        <div class="mb-4">
+                                            <h5>Change Password</h5>
+                                            <p class="text-muted small">Leave blank if you don't want to change your
+                                                password</p>
+
+                                            <div class="mb-3">
+                                                <label for="currentPassword" class="form-label">Current Password</label>
+                                                <input type="password" class="form-control" id="currentPassword"
+                                                    name="currentPassword">
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="newPassword" class="form-label">New Password</label>
+                                                <input type="password" class="form-control" id="newPassword"
+                                                    name="newPassword">
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="confirmPassword" class="form-label">Confirm New
+                                                    Password</label>
+                                                <input type="password" class="form-control" id="confirmPassword"
+                                                    name="confirmPassword">
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex justify-content-between">
+                                            <a href="/users/profile" class="btn btn-outline-secondary">Cancel</a>
+                                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                                        </div>
+                                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
