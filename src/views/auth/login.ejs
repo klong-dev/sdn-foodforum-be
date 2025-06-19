@@ -1,0 +1,55 @@
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h3 class="mb-0">Login</h3>
+                </div>
+                <div class="card-body">
+                    <% if (typeof error !=='undefined' ) { %>
+                        <div class="alert alert-danger" role="alert">
+                            <%= error %>
+                        </div>
+                        <% } %>
+                            <% if (typeof success !=='undefined' ) { %>
+                                <div class="alert alert-success" role="alert">
+                                    <%= success %>
+                                </div>
+                                <% } %>
+
+                                    <form action="/auth/login" method="POST">
+                                        <div class="mb-3">
+                                            <label for="email" class="form-label">Email address</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                                <input type="email" class="form-control" id="email" name="email"
+                                                    value="<%= typeof email !== 'undefined' ? email : '' %>" required>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <label for="password" class="form-label">Password</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                                <input type="password" class="form-control" id="password"
+                                                    name="password" required>
+                                            </div>
+                                            <div class="form-text text-end">
+                                                <a href="/auth/forgot-password" class="text-decoration-none">Forgot
+                                                    password?</a>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-grid gap-2">
+                                            <button type="submit" class="btn btn-primary btn-lg">Login</button>
+                                        </div>
+                                    </form>
+                </div>
+                <div class="card-footer text-center">
+                    <p class="mb-0">Don't have an account? <a href="/auth/register"
+                            class="text-decoration-none">Register</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

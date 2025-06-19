@@ -4,9 +4,9 @@ const authMiddleware = require('../middlewares/auth.middleware');
 const usersRoute = require('./users.route');
 const authRoute = require('./auth.route');
 const testRoute = require('./test.route');
+const homeRoute = require('./home.route');
 
-
-// Mount routes
+router.use('/', homeRoute);
 router.use('/users', usersRoute);
 router.use('/auth', authRoute);
 router.use('/test', testRoute);

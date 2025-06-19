@@ -1,0 +1,300 @@
+<!-- Hero Section -->
+<div class="hero-section text-center py-5 mb-5">
+    <div class="container">
+        <h1 class="display-4 fw-bold">Welcome to Food Forum</h1>
+        <p class="lead mb-4">Share recipes, discover culinary inspirations, and connect with food enthusiasts worldwide
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="/recipes" class="btn btn-primary btn-lg px-4">Explore Recipes</a>
+            <a href="/forum" class="btn btn-outline-dark btn-lg px-4">Join Discussions</a>
+        </div>
+    </div>
+</div>
+
+<!-- Categories Section -->
+<section class="container mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Popular Categories</h2>
+        <a href="/categories" class="text-decoration-none">View All</a>
+    </div>
+    <div class="row g-4">
+        <div class="col-md-4 col-sm-6">
+            <div class="card h-100">
+                <img src="https://images.unsplash.com/photo-1505253758473-96b7015fcd40?q=80&w=600&auto=format&fit=crop"
+                    class="card-img-top" alt="Italian Cuisine">
+                <div class="card-body">
+                    <h5 class="card-title">Italian Cuisine</h5>
+                    <p class="card-text">Explore traditional pasta recipes, authentic pizza techniques, and classic
+                        Italian desserts.</p>
+                    <a href="/categories/italian" class="btn btn-sm btn-outline-primary">Browse Italian</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <div class="card h-100">
+                <img src="https://images.unsplash.com/photo-1503764654157-72d979d9af2f?q=80&w=600&auto=format&fit=crop"
+                    class="card-img-top" alt="Asian Cuisine">
+                <div class="card-body">
+                    <h5 class="card-title">Asian Cuisine</h5>
+                    <p class="card-text">Discover the rich flavors of Asian cooking from stir-fries to exotic spices and
+                        sushi techniques.</p>
+                    <a href="/categories/asian" class="btn btn-sm btn-outline-primary">Browse Asian</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <div class="card h-100">
+                <img src="https://images.unsplash.com/photo-1592417817098-8fd3d9eb14a5?q=80&w=600&auto=format&fit=crop"
+                    class="card-img-top" alt="Desserts">
+                <div class="card-body">
+                    <h5 class="card-title">Desserts</h5>
+                    <p class="card-text">Satisfy your sweet tooth with our collection of cakes, pastries, and other
+                        delightful treats.</p>
+                    <a href="/categories/desserts" class="btn btn-sm btn-outline-primary">Browse Desserts</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Recipes Section -->
+<section class="bg-light py-5 mb-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Featured Recipes</h2>
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="card h-100 recipe-card">
+                    <div class="card-img-overlay d-flex align-items-start justify-content-end">
+                        <span class="badge bg-primary">Trending</span>
+                    </div>
+                    <img src="https://images.unsplash.com/photo-1551782450-17144efb9c50?q=80&w=500&auto=format&fit=crop"
+                        class="card-img-top" alt="Pasta Recipe">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted small"><i class="bi bi-clock"></i> 30 mins</span>
+                            <span class="text-muted small"><i class="bi bi-star-fill text-warning"></i> 4.8</span>
+                        </div>
+                        <h5 class="card-title">Homemade Pasta Carbonara</h5>
+                        <p class="card-text">A creamy classic Italian pasta dish with eggs, cheese, pancetta, and black
+                            pepper.</p>
+                        <div class="d-flex align-items-center">
+                            <img src="https://randomuser.me/api/portraits/women/12.jpg" alt="User"
+                                class="rounded-circle me-2" width="28">
+                            <small class="text-muted">By Sophie Martin</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="card h-100 recipe-card">
+                    <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=500&auto=format&fit=crop"
+                        class="card-img-top" alt="Pizza Recipe">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted small"><i class="bi bi-clock"></i> 45 mins</span>
+                            <span class="text-muted small"><i class="bi bi-star-fill text-warning"></i> 4.7</span>
+                        </div>
+                        <h5 class="card-title">Stone-Baked Pizza Margherita</h5>
+                        <p class="card-text">The perfect pizza with a crispy base, tangy tomato sauce, fresh mozzarella,
+                            and basil.</p>
+                        <div class="d-flex align-items-center">
+                            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="User"
+                                class="rounded-circle me-2" width="28">
+                            <small class="text-muted">By Marco Rossi</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="card h-100 recipe-card">
+                    <img src="https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?q=80&w=500&auto=format&fit=crop"
+                        class="card-img-top" alt="Cake Recipe">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted small"><i class="bi bi-clock"></i> 1 hour</span>
+                            <span class="text-muted small"><i class="bi bi-star-fill text-warning"></i> 4.9</span>
+                        </div>
+                        <h5 class="card-title">Vanilla Bean Cheesecake</h5>
+                        <p class="card-text">Creamy cheesecake with a buttery graham cracker crust and fresh seasonal
+                            berries.</p>
+                        <div class="d-flex align-items-center">
+                            <img src="https://randomuser.me/api/portraits/women/65.jpg" alt="User"
+                                class="rounded-circle me-2" width="28">
+                            <small class="text-muted">By Emma Johnson</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="card h-100 recipe-card">
+                    <div class="card-img-overlay d-flex align-items-start justify-content-end">
+                        <span class="badge bg-success">New</span>
+                    </div>
+                    <img src="https://images.unsplash.com/photo-1604908177453-7462950a6a3b?q=80&w=500&auto=format&fit=crop"
+                        class="card-img-top" alt="Curry Recipe">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted small"><i class="bi bi-clock"></i> 50 mins</span>
+                            <span class="text-muted small"><i class="bi bi-star-fill text-warning"></i> 4.6</span>
+                        </div>
+                        <h5 class="card-title">Thai Green Curry</h5>
+                        <p class="card-text">Authentic Thai curry with coconut milk, fresh vegetables, and aromatic
+                            herbs.</p>
+                        <div class="d-flex align-items-center">
+                            <img src="https://randomuser.me/api/portraits/men/45.jpg" alt="User"
+                                class="rounded-circle me-2" width="28">
+                            <small class="text-muted">By David Chen</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <a href="/recipes" class="btn btn-primary">View All Recipes</a>
+        </div>
+    </div>
+</section>
+
+<!-- Community Section -->
+<section class="container mb-5">
+    <h2 class="text-center mb-4">Join Our Food Community</h2>
+    <div class="row align-items-center">
+        <div class="col-md-6 mb-4 mb-md-0">
+            <img src="https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=800&auto=format&fit=crop"
+                class="img-fluid rounded" alt="Food Community">
+        </div>
+        <div class="col-md-6">
+            <div class="ps-md-4">
+                <div class="mb-4">
+                    <h3>Why Join Food Forum?</h3>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item bg-transparent"><i
+                                class="bi bi-check-circle-fill text-success me-2"></i> Share your favorite recipes with
+                            a global community</li>
+                        <li class="list-group-item bg-transparent"><i
+                                class="bi bi-check-circle-fill text-success me-2"></i> Get feedback and suggestions to
+                            improve your cooking</li>
+                        <li class="list-group-item bg-transparent"><i
+                                class="bi bi-check-circle-fill text-success me-2"></i> Discover new cuisines and cooking
+                            techniques</li>
+                        <li class="list-group-item bg-transparent"><i
+                                class="bi bi-check-circle-fill text-success me-2"></i> Connect with like-minded food
+                            enthusiasts</li>
+                        <li class="list-group-item bg-transparent"><i
+                                class="bi bi-check-circle-fill text-success me-2"></i> Join discussions about food
+                            trends and topics</li>
+                    </ul>
+                </div>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                    <a href="/auth/register" class="btn btn-primary">Join Now</a>
+                    <a href="/about" class="btn btn-outline-secondary">Learn More</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Recent Discussions Section -->
+<section class="bg-light py-5">
+    <div class="container">
+        <h2 class="mb-4">Recent Discussions</h2>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="list-group">
+                    <a href="/forum/post/1" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">Best way to store fresh herbs?</h5>
+                            <small><span class="badge bg-primary">14 replies</span></small>
+                        </div>
+                        <p class="mb-1">I always struggle to keep my herbs fresh. Any tips on how to make them last
+                            longer?</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Posted by Jamie T. • 2 days ago</small>
+                            <small class="text-muted"><i class="bi bi-eye"></i> 234 views</small>
+                        </div>
+                    </a>
+                    <a href="/forum/post/2" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">Cast iron vs. non-stick pans?</h5>
+                            <small><span class="badge bg-primary">23 replies</span></small>
+                        </div>
+                        <p class="mb-1">I'm looking to invest in some quality cookware. Which type of pan do you
+                            recommend and why?</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Posted by Alex W. • 3 days ago</small>
+                            <small class="text-muted"><i class="bi bi-eye"></i> 346 views</small>
+                        </div>
+                    </a>
+                    <a href="/forum/post/3" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">What's your go-to weeknight dinner?</h5>
+                            <small><span class="badge bg-primary">18 replies</span></small>
+                        </div>
+                        <p class="mb-1">Looking for quick and easy dinner ideas that don't compromise on flavor!</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Posted by Sarah K. • 4 days ago</small>
+                            <small class="text-muted"><i class="bi bi-eye"></i> 289 views</small>
+                        </div>
+                    </a>
+                </div>
+                <div class="text-end mt-3">
+                    <a href="/forum" class="text-decoration-none">View all discussions <i
+                            class="bi bi-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Start a Discussion</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Have a question or want to share your culinary experiences?</p>
+                        <a href="/forum/new" class="btn btn-primary d-block">New Topic</a>
+                    </div>
+                </div>
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Active Categories</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <a href="/forum/category/cooking-tips"
+                            class="list-group-item d-flex justify-content-between align-items-center">
+                            Cooking Tips
+                            <span class="badge bg-primary rounded-pill">42</span>
+                        </a>
+                        <a href="/forum/category/recipes"
+                            class="list-group-item d-flex justify-content-between align-items-center">
+                            Recipes
+                            <span class="badge bg-primary rounded-pill">28</span>
+                        </a>
+                        <a href="/forum/category/equipment"
+                            class="list-group-item d-flex justify-content-between align-items-center">
+                            Kitchen Equipment
+                            <span class="badge bg-primary rounded-pill">16</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Newsletter Section -->
+<section class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 text-center">
+            <h2 class="mb-3">Get Weekly Recipe Inspiration</h2>
+            <p class="lead mb-4">Subscribe to our newsletter and never miss a delicious recipe or cooking tip!</p>
+            <form class="row g-3 justify-content-center">
+                <div class="col-md-8">
+                    <input type="email" class="form-control form-control-lg" placeholder="Your email address">
+                </div>
+                <div class="col-md-auto">
+                    <button type="submit" class="btn btn-primary btn-lg">Subscribe</button>
+                </div>
+            </form>
+            <p class="mt-3 text-muted small">By subscribing, you agree to receive our newsletter emails and can
+                unsubscribe at any time.</p>
+        </div>
+    </div>
+</section>
