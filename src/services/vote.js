@@ -23,6 +23,14 @@ const createVote = async (data) => {
         if (!comment) throw new Error(`Cannot find any comment wiht the id: ${target_id}`)
     }
 
+    const existingVote = await Vote.findOne({ user_id, target_id });
+    if (existingVote) {
+        if (existingVote.vote_type === vote_type) return existingVote
+
+        existingVote.vote_type = vote_type
+        return await existingVote.save()
+    }
+
     const vote = new Vote({
         user_id,
         target_id,
@@ -34,4 +42,44 @@ const createVote = async (data) => {
     return result;
 }
 
-module.exports = { createVote }
+
+
+const getVotes = async (id) => {
+    const upvotes = await Vote.countDocuments({
+        target_id: id,
+        vote_type: 'upvote'
+    })
+
+    const downvotes = await Vote.countDocuments({
+        target_id: id,
+        vote_type: 'downvote'
+    })
+
+    const netVote = upvotes - downvotes;
+
+    return {
+        target_id: id,
+        upvotes,
+        downvotes,
+        netVote,
+    }
+}
+
+
+
+
+const deleteVote = async (data) => {
+    const { user_id, target_id } = data
+
+    if (!user_id || !target_id) {
+        throw new Error("Missing required fields")
+    }
+
+    const deleted = await Vote.findOneAndDelete({ user_id, target_id })
+
+    if (!deleted) throw new Error('Vote not found or already deleted')
+
+    return deleted
+}
+
+module.exports = { createVote, getVotes, deleteVote }

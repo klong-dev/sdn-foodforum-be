@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FoodForum - Share Your Culinary Adventures</title>
+    <link rel="stylesheet" href="/styles/home.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="header">
+      <div class="header__container">
+        <div class="header__logo">
+          <i class="fas fa-utensils"></i>
+          <span>FoodForum</span>
+        </div>
+        <div class="header__search">
+          <input type="text" placeholder="Search for recipes, restaurants, tips..." />
+          <button><i class="fas fa-search"></i></button>
+        </div>
+        <div class="header__user">
+          <button class="btn btn--primary">Login</button>
+          <button class="btn btn--secondary">Sign Up</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="main-container">
+      <!-- Left Navigation -->
+      <nav class="sidebar sidebar--left">
+        <div class="sidebar__section">
+          <h3>Categories</h3>
+          <ul class="nav-list">
+            <li>
+              <a href="#"><i class="fas fa-home"></i> Home</a>
+            </li>
+            <li>
+              <a href="#"><i class="fas fa-fire"></i> Popular</a>
+            </li>
+            <li>
+              <a href="#"><i class="fas fa-pizza-slice"></i> Recipes</a>
+            </li>
+            <li>
+              <a href="#"><i class="fas fa-store"></i> Restaurants</a>
+            </li>
+            <li>
+              <a href="#"><i class="fas fa-cocktail"></i> Drinks</a>
+            </li>
+            <li>
+              <a href="#"><i class="fas fa-birthday-cake"></i> Desserts</a>
+            </li>
+            <li>
+              <a href="#"><i class="fas fa-leaf"></i> Healthy</a>
+            </li>
+            <li>
+              <a href="#"><i class="fas fa-globe"></i> International</a>
+            </li>
+          </ul>
+        </div>
+        <div class="sidebar__section">
+          <h3>My Communities</h3>
+          <ul class="nav-list">
+            <li>
+              <a href="#"><i class="fas fa-users"></i> Italian Cuisine</a>
+            </li>
+            <li>
+              <a href="#"><i class="fas fa-users"></i> Vegan Recipes</a>
+            </li>
+            <li>
+              <a href="#"><i class="fas fa-users"></i> BBQ Masters</a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="content">
+        <div class="content__header">
+          <h2>Popular Food Posts</h2>
+          <div class="sort-options">
+            <button class="sort-btn active">Hot</button>
+            <button class="sort-btn">New</button>
+            <button class="sort-btn">Top</button>
+          </div>
+        </div>
+
+        <!-- Post -->
+        <% posts.forEach(post => { %>
+        <article class="post">
+          <div class="post__votes">
+            <!-- Upvote Form -->
+            <form action="/vote" method="POST" style="display: inline">
+              <input type="hidden" name="user_id" value="684a711d4809fcd076b67125" />
+              <input type="hidden" name="target_id" value="<%= post._id %>" />
+              <input type="hidden" name="target_type" value="post" />
+              <input type="hidden" name="vote_type" value="upvote" />
+              <button type="submit" class="vote-btn vote-btn--up" aria-label="Upvote">
+                <i class="fas fa-chevron-up"></i>
+              </button>
+            </form>
+
+            <!-- Net vote display -->
+            <span class="vote-count"><%= post.voteData?.netVote || 0 %></span>
+
+            <!-- Downvote Form -->
+            <form action="/vote" method="POST" style="display: inline">
+              <input type="hidden" name="user_id" value="684a711d4809fcd076b67125" />
+              <input type="hidden" name="target_id" value="<%= post._id %>" />
+              <input type="hidden" name="target_type" value="post" />
+              <input type="hidden" name="vote_type" value="downvote" />
+              <button type="submit" class="vote-btn vote-btn--down" aria-label="Downvote">
+                <i class="fas fa-chevron-down"></i>
+              </button>
+            </form>
+          </div>
+
+          <div class="post__content">
+            <div class="post__meta">
+              <span class="community">r/<%= post.community || 'recipes' %></span>
+              <span class="author">Posted by u/<%= post.author?.username || 'unknown' %></span>
+              <span class="time"><%= post.timeAgo || 'just now' %></span>
+            </div>
+            <h3 class="post__title"><%= post.title %></h3>
+            <div class="post__image">
+              <img src="<%= post.image || 'https://img.freepik.com/free-photo/top-view-table-full-food_23-2149209253.jpg' %>" alt="<%= post.title %>" />
+            </div>
+            <p class="post__text"><%= post.content %></p>
+            <div class="post__actions"><button class="action-btn" onclick="openComments('<%= post._id %>')"><i class="fas fa-comment"></i> <%= post.totalComments || 0 %> Comments</button>
+              
+              <button class="action-btn"><i class="fas fa-share"></i> Share</button>
+              <button class="action-btn"><i class="fas fa-bookmark"></i> Save</button>
+            </div>
+          </div>
+
+          <!-- Comments Modal -->
+          <div id="commentsModal-<%= post._id %>" class="modal" tabindex="-1" aria-modal="true" role="dialog">
+            <div class="modal__content">
+              <div class="modal__header">
+                <h3>Comments</h3>
+                <button class="modal__close" onclick="closeComments('<%= post._id %>')" aria-label="Close">&times;</button>
+              </div>
+              <div class="modal__body">
+                <!-- Create Commemt-->
+                <form class="comment-form" action="/comment" method="POST">
+                  <input type="hidden" name="post_id" value="<%= post._id %>" />
+                  <input type="hidden" name="user_id" value="684a711d4809fcd076b67125" />
+                  <textarea name="content" placeholder="Add a comment..." required></textarea>
+                  <button class="btn btn--primary" type="submit">Post Comment</button>
+                </form>
+
+                <div class="comments-list">
+                  <% post.comments?.forEach(comment => { %>
+                  <div class="comment">
+                    <div class="comment__votes">
+                      <!-- Upvote Form for Comment -->
+                      <form action="/vote" method="POST" style="display: inline">
+                        <input type="hidden" name="user_id" value="684a711d4809fcd076b67125" />
+                        <input type="hidden" name="target_id" value="<%= comment._id %>" />
+                        <input type="hidden" name="target_type" value="comment" />
+                        <input type="hidden" name="vote_type" value="upvote" />
+                        <button type="submit" class="vote-btn vote-btn--up" aria-label="Upvote">
+                          <i class="fas fa-chevron-up"></i>
+                        </button>
+                      </form>
+                      <!-- Net vote display for Comment -->
+                      <span class="vote-count"><%= comment.voteData?.netVote || 0 %></span>
+                      <!-- Downvote Form for Comment -->
+                      <form action="/vote" method="POST" style="display: inline">
+                        <input type="hidden" name="user_id" value="684a711d4809fcd076b67125" />
+                        <input type="hidden" name="target_id" value="<%= comment._id %>" />
+                        <input type="hidden" name="target_type" value="comment" />
+                        <input type="hidden" name="vote_type" value="downvote" />
+                        <button type="submit" class="vote-btn vote-btn--down" aria-label="Downvote">
+                          <i class="fas fa-chevron-down"></i>
+                        </button>
+                      </form>
+                    </div>
+                    <div class="comment__content">
+                      <div class="comment__meta">
+                        <span class="author">u/<%= comment?.user_id?.username || 'anonymous' %></span>
+                        <span class="time"><%= comment.timeAgo || 'just now' %></span>
+                      </div>
+                      <p><%= comment.content %></p>
+
+                      <!-- Reply button -->
+                      <div class="comment__actions">
+                        <button class="reply-btn" onclick="toggleReply(this)">Reply</button>
+                      </div>
+
+                      <!-- Reply form -->
+                      <form action="/comment" method="POST" class="reply-form" style="display: none">
+                        <input type="hidden" name="post_id" value="<%= post._id %>" />
+                        <input type="hidden" name="user_id" value="684a711d4809fcd076b67125" />
+                        <input type="hidden" name="parent_id" value="<%= comment._id %>" />
+                        <!-- This makes it a reply -->
+                        <textarea name="content" placeholder="Write a reply..." required></textarea>
+                        <button class="btn btn--small" type="submit">Reply</button>
+                      </form>
+
+                      <% if (comment.replies && comment.replies.length > 0) { %>
+                        <div class="replies" style="margin-left:30px; border-left:2px solid #e9ecef; padding-left:16px; margin-top:10px;">
+                          <% comment.replies.forEach(reply => { %>
+                            <div class="reply" style="background:#f8f9fa; border-radius:6px; padding:10px 12px; margin-bottom:10px; font-size:14px; display:flex;">
+                              <!-- Vote buttons for reply -->
+                              <div style="display:flex; flex-direction:column; align-items:center; margin-right:10px;">
+                                <form action="/vote" method="POST" style="display: inline">
+                                  <input type="hidden" name="user_id" value="684a711d4809fcd076b67125" />
+                                  <input type="hidden" name="target_id" value="<%= reply._id %>" />
+                                  <input type="hidden" name="target_type" value="comment" />
+                                  <input type="hidden" name="vote_type" value="upvote" />
+                                  <button type="submit" class="vote-btn vote-btn--up" aria-label="Upvote">
+                                    <i class="fas fa-chevron-up"></i>
+                                  </button>
+                                </form>
+                                <span class="vote-count"><%= reply.voteData?.netVote || 0 %></span>
+                                <form action="/vote" method="POST" style="display: inline">
+                                  <input type="hidden" name="user_id" value="684a711d4809fcd076b67125" />
+                                  <input type="hidden" name="target_id" value="<%= reply._id %>" />
+                                  <input type="hidden" name="target_type" value="comment" />
+                                  <input type="hidden" name="vote_type" value="downvote" />
+                                  <button type="submit" class="vote-btn vote-btn--down" aria-label="Downvote">
+                                    <i class="fas fa-chevron-down"></i>
+                                  </button>
+                                </form>
+                              </div>
+                              <div>
+                                <span class="author" style="color:#ff6b35; font-weight:600; margin-right:8px;">u/<%= reply.user_id?.username %></span>
+                                <p style="margin:4px 0 0 0; color:#212529;"><%= reply.content %></p>
+                              </div>
+                            </div>
+                          <% }) %>
+                        </div>
+                      <% } %>
+                    </div>
+                  </div>
+                  <% }) %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <% }) %>
+      </main>
+
+      <!-- Right Sidebar -->
+      <aside class="sidebar sidebar--right">
+        <div class="sidebar__section">
+          <h3>Trending Topics</h3>
+          <ul class="trending-list">
+            <li><span class="trend-tag">#SourdoughStarter</span></li>
+            <li><span class="trend-tag">#AirFryerRecipes</span></li>
+            <li><span class="trend-tag">#PlantBased</span></li>
+            <li><span class="trend-tag">#MealPrep</span></li>
+          </ul>
+        </div>
+        <div class="sidebar__section">
+          <h3>Popular Communities</h3>
+          <div class="community-card">
+            <h4>r/recipes</h4>
+            <p>2.1M members</p>
+            <button class="btn btn--small">Join</button>
+          </div>
+          <div class="community-card">
+            <h4>r/food</h4>
+            <p>1.8M members</p>
+            <button class="btn btn--small">Join</button>
+          </div>
+        </div>
+        <div class="sidebar__section">
+          <h3>Recipe of the Day</h3>
+          <div class="recipe-card">
+            <img src="/placeholder.svg?height=120&width=200" alt="Recipe of the day" />
+            <h4>Creamy Mushroom Risotto</h4>
+            <p>A classic Italian comfort dish</p>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <script>
+      // Voting functionality
+      function vote(button, direction) {
+        const voteCount = button.parentElement.querySelector(".vote-count");
+        let count = parseInt(voteCount.textContent);
+
+        // Remove active states
+        const upBtn = button.parentElement.querySelector(".vote-btn--up");
+        const downBtn = button.parentElement.querySelector(".vote-btn--down");
+        upBtn.classList.remove("active");
+        downBtn.classList.remove("active");
+
+        if (direction === "up") {
+          count++;
+          upBtn.classList.add("active");
+        } else {
+          count--;
+          downBtn.classList.add("active");
+        }
+
+        voteCount.textContent = count;
+      }
+
+      // Comments modal functionality
+      function openComments(postId) {
+        document.getElementById(`commentsModal-${postId}`).style.display = "flex";
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeComments(postId) {
+        document.getElementById(`commentsModal-${postId}`).style.display = "none";
+        document.body.style.overflow = "auto";
+      }
+
+      // Optional: Close modal when clicking outside content
+      document.querySelectorAll(".modal").forEach((modal) => {
+        modal.addEventListener("click", function (e) {
+          if (e.target === modal) {
+            modal.style.display = "none";
+            document.body.style.overflow = "auto";
+          }
+        });
+      });
+
+      function toggleReply(btn) {
+        const replyForm = btn.closest(".comment__content").querySelector(".reply-form");
+        replyForm.style.display = replyForm.style.display === "none" ? "block" : "none";
+      }
+    </script>
+  </body>
+</html>

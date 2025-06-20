@@ -1,4 +1,6 @@
 const postService = require('../services/postService.js');
+const { getVotes } = require('../services/vote.js')
+const { getAllCommentsByPostId } = require('../services/comment.js')
 
 const postController = {
     createPost: async (req, res) => {
@@ -21,9 +23,31 @@ const postController = {
     getPosts: async (req, res) => {
         try {
             const posts = await postService.getAllPosts();
-            res.status(200).json(posts);
-        } catch (error) {
-            res.status(500).json({ message: error.message });
+
+            const postWithData = []
+
+            for (const post of posts) {
+                const voteData = await getVotes(post._id)
+                const { threaded, totalCount } = await getAllCommentsByPostId(post._id);
+
+                postWithData.push({
+                    ...post.toObject(),
+                    voteData,
+                    comments: threaded,
+                    totalComments: totalCount,
+                })
+            }
+
+            // res.status(200).json(posts)
+
+            res.render('pages/home', {
+                title: 'FoodForum - Home',
+                user: req.user || null,
+                posts: postWithData,
+            });
+        } catch (e) {
+            console.error('Error rendering home page:', e.message);
+            res.status(500).send('Error loading Home Page');
         }
     },
 
@@ -79,21 +103,21 @@ const postController = {
     },
 };
 module.exports = postController;
-const { createPost } = require('../services/post')
+// const { createPost } = require('../services/post')
 
-const create = async (req, res) => {
-    try {
-        console.log(req.body)
-        const post = await createPost(req.body)
-        if (post) {
-            res.status(201).json({
-                message: 'Create Post successfully',
-                post
-            })
-        }
-    } catch (e) {
-        res.status(400).json({ error: error.message });
-    }
-}
+// const create = async (req, res) => {
+//     try {
+//         console.log(req.body)
+//         const post = await createPost(req.body)
+//         if (post) {
+//             res.status(201).json({
+//                 message: 'Create Post successfully',
+//                 post
+//             })
+//         }
+//     } catch (e) {
+//         res.status(400).json({ error: error.message });
+//     }
+// }
 
-module.exports = {create}
+// module.exports = {create}

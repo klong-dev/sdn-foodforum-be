@@ -1,4 +1,4 @@
-const post = require('../models/posts.model')
+const post = require('../models/post.model')
 
 const postService = {
     createPost: async (userId, postData) => {
@@ -7,7 +7,10 @@ const postService = {
     },
 
     getAllPosts: async () => {
-        return await post.find({ status: { $ne: 'deleted' } }).populate('author');
+        return await post
+            .find({ status: { $ne: 'deleted' } })
+            .populate('author')
+            .sort({ createdAt: -1 }); // Newest first
     },
 
     getPostById: async (id) => {
@@ -28,5 +31,6 @@ const postService = {
     getPostsByUser: async (userId) => {
         return await post.find({ author: userId }).populate('author');
     },
+    
 };
 module.exports = postService;

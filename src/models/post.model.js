@@ -1,27 +1,41 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const postSchema = new mongoose.Schema({
-    user_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-    },
-    subcategory_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'SubCategory',
-    },
+const postSchema = new Schema({
     title: {
         type: String,
         required: true,
+        trim: true
     },
     content: {
         type: String,
         required: true,
+        trim: true
     },
-    is_locked: {
-        type: Boolean,
-        default: false,
+    author: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
     },
-}, { timestamps: true })
+    images: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'PostImage'
+    }],
+    status: {
+        type: String,
+        enum: ['active', 'inactive', 'closed', 'deleted', 'archived', 'pending', 'spam', 'flagged'],
+        default: 'active'
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now,
+        set: function () {
+            return Date.now();
+        }
+    },
+});
 
-module.exports = mongoose.model('Post', postSchema)
+module.exports = mongoose.model('Post', postSchema);
