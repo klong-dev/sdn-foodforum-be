@@ -9,8 +9,8 @@ router.get('/register', authController.getRegisterPage);
 // Routes that handle both web forms and API requests
 router.post('/register', authController.register);
 router.post('/login', authController.login);
-router.get('/logout', authController.logout);  // Changed to GET for web navigation
-router.post('/logout', authController.logout); // Keep POST for API compatibility
+router.get('/logout', authController.logout);  
+router.post('/logout', authController.logout);
 
 // API-specific routes
 router.post('/refresh-token', authController.refreshToken);

@@ -1,6 +1,6 @@
 const userService = require('../services/user');
 
-// New methods for EJS views
+// methods for EJS views
 exports.getLoginPage = (req, res) => {
     res.render('auth/login', {
         title: 'Login'
