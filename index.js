@@ -10,19 +10,17 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({
-    origin: process.env.CLIENT_URL,
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
     credentials: true
 }));
 
+app.use(cookieParser()); // Add cookie parser
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser()); // Add cookie parser
 
 // Routes
 const routes = require('./src/routes/index');
 const { connectDB } = require('./src/config/database.config');
-app.use('/', routes);
-
 app.use('/', routes);
 
 // Connect to MongoDB
