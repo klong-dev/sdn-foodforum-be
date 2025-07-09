@@ -21,14 +21,9 @@ exports.getUserById = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
     try {
-        // Get the current user first
         const currentUser = await userService.getUserById(req.params.id);
         if (!currentUser) return res.status(404).json({ error: 'User not found' });
-
-        // Merge existing user data with the updates from the request body
         const userData = { ...currentUser.toObject(), ...req.body };
-
-        // Update with merged data
         const updatedUser = await userService.updateUser(req.params.id, userData);
         res.json(updatedUser);
     } catch (error) {
@@ -42,6 +37,36 @@ exports.deleteUser = async (req, res) => {
         if (!deletedUser) return res.status(404).json({ error: 'User not found' });
         res.json({ message: 'User deleted successfully' });
     } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getCurrentUser = async (req, res) => {
+    try {
+        // Log user ID from the token
+        console.log('User ID from token:', req.user.id);
+
+        const user = await userService.getUserById(req.user.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        // Log entire user object to debug
+        console.log('User from database:', JSON.stringify(user, null, 2));
+
+        // Return all user fields except password
+        const userProfile = {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            avatar: user.avatar,
+            phone_number: user.phone_number,
+            role: user.role,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+        };
+
+        res.json(userProfile);
+    } catch (error) {
+        console.error('Error in getCurrentUser:', error);
         res.status(500).json({ error: error.message });
     }
 };

@@ -20,6 +20,14 @@ const userSchema = new Schema({
         type: String,
         required: true,
     },
+    avatar: {
+        type: String,
+        default: null,
+    },
+    phone_number: {
+        type: String,
+        default: null,
+    },
     role: {
         type: String,
         enum: ['user', 'moderator', 'admin'],

@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/users');
+const authMiddleware = require('../middlewares/auth.middleware');
+
+// Get current user profile (requires authentication)
+router.get('/me', authMiddleware.verifyToken, userController.getCurrentUser);
 
 // CRUD routes
 router.get('/', userController.getUsers);

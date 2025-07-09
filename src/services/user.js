@@ -20,11 +20,7 @@ exports.authenticateUser = async (email, password) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new Error('Invalid credentials');
-
-    // Extract user role for token
-    const role = user.role || 'user'; // Default to 'user' if role is undefined
-
-    // Generate access token with user ID and role included (without permissions)
+    const role = user.role || 'user'; 
     const accessToken = jwt.sign(
         {
             id: user._id,
@@ -34,7 +30,6 @@ exports.authenticateUser = async (email, password) => {
         { expiresIn: '15m' }
     );
 
-    // Generate refresh token (long-lived)
     const refreshToken = uuidv4();
 
     // Store refresh token in Redis with user ID as value
@@ -49,7 +44,6 @@ exports.authenticateUser = async (email, password) => {
 };
 
 
-// Add new method for token refresh
 exports.refreshAccessToken = async (refreshToken) => {
     const userId = await getAsync(`refresh_token:${refreshToken}`);
     if (!userId) throw new Error('Invalid refresh token');
@@ -57,15 +51,12 @@ exports.refreshAccessToken = async (refreshToken) => {
     const user = await User.findById(userId);
     if (!user) throw new Error('User not found');
 
-    // Extract role for token
     const role = user.role || 'user';
 
-    // Generate new access token with role 
     const accessToken = jwt.sign(
         {
             id: user._id,
             role: role
-            // Removed permissions reference that was causing errors
         },
         process.env.JWT_SECRET,
         { expiresIn: '15m' }
@@ -74,7 +65,6 @@ exports.refreshAccessToken = async (refreshToken) => {
     return { accessToken, user };
 };
 
-// Add logout method to invalidate refresh token
 exports.logout = async (refreshToken) => {
     await delAsync(`refresh_token:${refreshToken}`);
 };
