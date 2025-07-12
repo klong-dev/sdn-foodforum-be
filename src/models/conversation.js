@@ -20,9 +20,21 @@ const conversationSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Message'
     },
-    lastMessageTime: {
+    lastMessageAt: {
         type: Date,
         default: Date.now
+    },
+    type: {
+        type: String,
+        enum: ['private', 'group'],
+        default: 'private'
+    },
+    name: {
+        type: String,
+        trim: true
+    },
+    avatar: {
+        type: String
     },
     isActive: {
         type: Boolean,
@@ -32,45 +44,70 @@ const conversationSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Ensure exactly two participants
+// Validation for private conversations
 conversationSchema.pre('save', function (next) {
-    if (this.participants.length !== 2) {
-        return next(new Error('Conversation must have exactly two participants'));
+    if (this.type === 'private' && this.participants.length !== 2) {
+        return next(new Error('Private conversation must have exactly 2 participants'));
     }
     next();
 });
 
-// Update last message time when new message is added
+// Update last message
 conversationSchema.methods.updateLastMessage = async function (messageId) {
-    this.lastMessage = messageId;
-    this.lastMessageTime = new Date();
-    await this.save();
+    const Message = require('./Message');
+
+    // Check if the message is not deleted
+    const message = await Message.findById(messageId);
+    if (message && !message.deleted.isDeleted) {
+        this.lastMessage = messageId;
+        this.lastMessageAt = new Date();
+        return await this.save();
+    }
+
+    // If message is deleted, find the most recent non-deleted message
+    const lastValidMessage = await Message.findOne({
+        conversation: this._id,
+        'deleted.isDeleted': false
+    }).sort({ createdAt: -1 });
+
+    if (lastValidMessage) {
+        this.lastMessage = lastValidMessage._id;
+        this.lastMessageAt = lastValidMessage.createdAt;
+    } else {
+        this.lastMessage = null;
+        this.lastMessageAt = this.createdAt;
+    }
+
+    return await this.save();
 };
 
-// Increment unread count for a participant
+// Increment unread count
 conversationSchema.methods.incrementUnreadCount = async function (userId) {
     const participant = this.participants.find(p => p.user.toString() === userId.toString());
     if (participant) {
         participant.unreadCount += 1;
-        await this.save();
+        return await this.save();
     }
 };
 
-// Reset unread count for a participant
+// Reset unread count
 conversationSchema.methods.resetUnreadCount = async function (userId) {
     const participant = this.participants.find(p => p.user.toString() === userId.toString());
     if (participant) {
         participant.unreadCount = 0;
         participant.lastSeen = new Date();
-        await this.save();
+        return await this.save();
     }
 };
 
-// Indexes for faster queries
+// Check if user is participant
+conversationSchema.methods.isParticipant = function (userId) {
+    return this.participants.some(p => p.user.toString() === userId.toString());
+};
+
+// Indexes
 conversationSchema.index({ 'participants.user': 1 });
-conversationSchema.index({ lastMessageTime: -1 });
+conversationSchema.index({ lastMessageAt: -1 });
 conversationSchema.index({ isActive: 1 });
 
-const Conversation = mongoose.model('Conversation', conversationSchema);
-
-module.exports = Conversation;
+module.exports = mongoose.model('Conversation', conversationSchema);

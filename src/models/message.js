@@ -1,6 +1,4 @@
 const mongoose = require('mongoose');
-const Conversation = require('./conversation');
-const User = require('./user');
 
 const messageSchema = new mongoose.Schema({
     conversation: {
@@ -17,6 +15,7 @@ const messageSchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true,
+        maxlength: [2000, 'Message cannot exceed 2000 characters']
     },
     type: {
         type: String,
@@ -39,11 +38,9 @@ const messageSchema = new mongoose.Schema({
         },
         size: {
             type: Number,
-            required: true,
-            min: 0,
-            max: 10485760 // 10MB limit
+            required: true
         },
-        mimeType: String // e.g., 'image/jpeg', 'application/pdf'
+        mimeType: String
     }],
     replyTo: {
         type: mongoose.Schema.Types.ObjectId,
@@ -55,10 +52,7 @@ const messageSchema = new mongoose.Schema({
             default: false
         },
         editedAt: Date,
-        editHistory: [{
-            content: String,
-            editedAt: Date
-        }]
+        originalContent: String
     },
     deleted: {
         isDeleted: {
@@ -81,45 +75,37 @@ const messageSchema = new mongoose.Schema({
             default: Date.now
         }
     }],
+    reactions: [{
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        emoji: {
+            type: String,
+            required: true
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now
+        }
+    }]
 }, {
     timestamps: true
 });
 
-// Ensure sender is a participant in the conversation
-messageSchema.pre('save', async function (next) {
-    const Conversation = mongoose.model('Conversation');
-    const conversation = await Conversation.findById(this.conversation);
-
-    if (!conversation) {
-        return next(new Error('Conversation not found for this message.'));
-    }
-
-    console.log(conversation.participants);
-    console.log(this.sender);
-
-    if (!conversation.participants.find(p => p.user.toString() === this.sender._id.toString())) {
-        return next(new Error('Sender must be a participant in the conversation'));
-    }
-    next();
-});
-
-// Validate edit time limit (e.g., 5 minutes)
+// Check if message can be edited (within 5 minutes)
 messageSchema.methods.canEdit = function () {
-    const editTimeLimit = 5 * 60 * 1000; // 5 minutes in milliseconds
-    return Date.now() - this.createdAt < editTimeLimit;
+    const editTimeLimit = 5 * 60 * 1000; // 5 minutes
+    return Date.now() - this.createdAt.getTime() < editTimeLimit;
 };
 
-// Track message edits
-messageSchema.methods.edit = function (newContent) {
+// Edit message
+messageSchema.methods.editMessage = function (newContent) {
     if (!this.canEdit()) {
         throw new Error('Message can no longer be edited');
     }
 
-    this.edited.editHistory.push({
-        content: this.content,
-        editedAt: this.edited.editedAt || this.createdAt
-    });
-
+    this.edited.originalContent = this.content;
     this.content = newContent;
     this.edited.isEdited = true;
     this.edited.editedAt = new Date();
@@ -127,33 +113,54 @@ messageSchema.methods.edit = function (newContent) {
 
 // Soft delete message
 messageSchema.methods.softDelete = function (userId) {
-    this.deleted = {
-        isDeleted: true,
-        deletedAt: new Date(),
-        deletedBy: userId
-    };
+    this.deleted.isDeleted = true;
+    this.deleted.deletedAt = new Date();
+    this.deleted.deletedBy = userId;
     this.content = 'This message was deleted';
     this.attachments = [];
 };
 
-// Mark message as read by user
+// Mark as read by user
 messageSchema.methods.markAsRead = async function (userId) {
-    if (!this.readBy.some(r => r.user.toString() === userId.toString())) {
+    const alreadyRead = this.readBy.find(r => r.user.toString() === userId.toString());
+    if (!alreadyRead) {
         this.readBy.push({
             user: userId,
             readAt: new Date()
         });
-        await this.save();
+        return await this.save();
     }
+    return this;
 };
 
-// Indexes for faster queries
+// Add reaction
+messageSchema.methods.addReaction = async function (userId, emoji) {
+    const existingReaction = this.reactions.find(r =>
+        r.user.toString() === userId.toString() && r.emoji === emoji
+    );
+
+    if (existingReaction) {
+        // Remove reaction if it already exists
+        this.reactions = this.reactions.filter(r =>
+            !(r.user.toString() === userId.toString() && r.emoji === emoji)
+        );
+    } else {
+        // Remove any existing reaction from this user and add new one
+        this.reactions = this.reactions.filter(r => r.user.toString() !== userId.toString());
+        this.reactions.push({
+            user: userId,
+            emoji,
+            createdAt: new Date()
+        });
+    }
+
+    return await this.save();
+};
+
+// Indexes
 messageSchema.index({ conversation: 1, createdAt: -1 });
 messageSchema.index({ sender: 1 });
-messageSchema.index({ 'readBy.user': 1 });
-messageSchema.index({ replyTo: 1 });
 messageSchema.index({ 'deleted.isDeleted': 1 });
+messageSchema.index({ replyTo: 1 });
 
-const Message = mongoose.model('Message', messageSchema);
-
-module.exports = Message;
+module.exports = mongoose.model('Message', messageSchema);
