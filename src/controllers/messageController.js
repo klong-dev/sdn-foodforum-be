@@ -137,3 +137,36 @@ exports.deleteMessage = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 }; 
+
+
+// Get replies to a specific message
+exports.getRepliesToMessage = async (req, res) => {
+    try {
+        const { messageId } = req.params;
+        const { page = 1, limit = 10 } = req.query;
+        const userId = req.user._id;
+
+        // First, get the original message to verify permissions
+        const originalMessage = await Message.findById(messageId);
+        if (!originalMessage) {
+            return res.status(404).json({ error: 'Message not found' });
+        }
+
+        // Verify user is part of the conversation
+        const conversation = await Conversation.findById(originalMessage.conversation);
+        if (!conversation.participants.some(p => p.user.toString() === userId.toString())) {
+            return res.status(403).json({ error: 'Not authorized to view these replies' });
+        }
+
+        // Get replies using the model's static method
+        const replies = await Message.getRepliesToMessage(messageId, {
+            limit: parseInt(limit),
+            skip: (page - 1) * limit,
+            populateSender: true
+        });
+
+        res.status(200).json(replies);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}; 

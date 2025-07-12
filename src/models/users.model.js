@@ -33,7 +33,25 @@ const userSchema = new Schema({
         enum: ['user', 'moderator', 'admin'],
         default: 'user',
     },
-}, { timestamps: true });
+   avatar: {
+        type: String,
+        default: null
+    },
+    isOnline: {
+        type: Boolean,
+        default: false
+    },
+    lastSeen: {
+        type: Date,
+        default: Date.now
+    },
+    socketId: {
+        type: String,
+        default: null
+    }
+}, {
+    timestamps: true
+});
 
 userSchema.set('toJSON', {
     transform: function (doc, ret, options) {
@@ -41,5 +59,21 @@ userSchema.set('toJSON', {
         return ret;
     }
 });
+
+// Update online status
+userSchema.methods.setOnline = async function (socketId) {
+    this.isOnline = true;
+    this.socketId = socketId;
+    this.lastSeen = new Date();
+    return await this.save();
+};
+
+userSchema.methods.setOffline = async function () {
+    this.isOnline = false;
+    this.socketId = null;
+    this.lastSeen = new Date();
+    return await this.save();
+};
+
 
 module.exports = mongoose.model('User', userSchema);
