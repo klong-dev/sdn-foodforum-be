@@ -33,7 +33,7 @@ const userSchema = new Schema({
         enum: ['user', 'moderator', 'admin'],
         default: 'user',
     },
-   avatar: {
+    avatar: {
         type: String,
         default: null
     },
@@ -48,6 +48,12 @@ const userSchema = new Schema({
     socketId: {
         type: String,
         default: null
+    },
+    bio: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: [300, 'Bio cannot be more than 300 characters']
     }
 }, {
     timestamps: true

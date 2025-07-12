@@ -60,6 +60,7 @@ exports.getCurrentUser = async (req, res) => {
             avatar: user.avatar,
             phone_number: user.phone_number,
             role: user.role,
+            bio: user.bio,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt
         };
@@ -67,6 +68,19 @@ exports.getCurrentUser = async (req, res) => {
         res.json(userProfile);
     } catch (error) {
         console.error('Error in getCurrentUser:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.uploadAvatar = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+        const avatarPath = `/uploads/${req.file.filename}`;
+        const updatedUser = await userService.updateUser(req.user.id, { avatar: avatarPath });
+        res.json({ message: 'Avatar updated successfully', avatar: avatarPath, user: updatedUser });
+    } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
