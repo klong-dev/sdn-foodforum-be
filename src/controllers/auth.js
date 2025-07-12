@@ -2,6 +2,7 @@ const userService = require('../services/user');
 
 exports.register = async (req, res) => {
     try {
+        console.error('Register error:', error);
         console.log('Register req.body:', req.body);
 
         const user = await userService.createUser(req.body);
