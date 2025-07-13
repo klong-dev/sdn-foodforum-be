@@ -13,7 +13,7 @@ const socketService = (io) => {
             }
 
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            const user = await User.findById(decoded.userId);
+            const user = await User.findById(decoded.id);
 
             if (!user) {
                 return next(new Error('User not found'));
@@ -51,13 +51,14 @@ const socketService = (io) => {
         // Join conversation room
         socket.on('conversation:join', async (data) => {
             try {
+                
                 const { conversationId } = data;
 
                 // Verify user is participant
                 const conversation = await Conversation.findOne({
                     _id: conversationId,
                     'participants.user': socket.userId
-                });
+                }).populate('participants.user', 'username email avatar role isOnline lastSeen');
 
                 if (!conversation) {
                     socket.emit('error', { message: 'Conversation not found' });
@@ -104,7 +105,7 @@ const socketService = (io) => {
                 const conversation = await Conversation.findOne({
                     _id: conversationId,
                     'participants.user': socket.userId
-                });
+                }).populate('participants.user', 'username email avatar role isOnline lastSeen');
 
                 if (!conversation) {
                     const error = 'Conversation not found';
@@ -146,10 +147,10 @@ const socketService = (io) => {
                 }
 
                 // Populate message
-                await message.populate('sender', 'username avatar');
+                await message.populate('sender', 'username email avatar role _id');
                 if (replyTo) {
                     await message.populate('replyTo', 'content sender');
-                    await message.populate('replyTo.sender', 'username');
+                    await message.populate('replyTo.sender', 'username avatar _id');
                 }
 
                 // Add tempId to the message for client-side deduplication
@@ -215,10 +216,10 @@ const socketService = (io) => {
                 message.editMessage(content);
                 await message.save();
 
-                await message.populate('sender', 'username avatar');
+                await message.populate('sender', 'username email avatar role _id');
                 if (message.replyTo) {
                     await message.populate('replyTo', 'content sender');
-                    await message.populate('replyTo.sender', 'username');
+                    await message.populate('replyTo.sender', 'username avatar _id');
                 }
 
                 // Send acknowledgment to sender
@@ -300,7 +301,7 @@ const socketService = (io) => {
                 const conversation = await Conversation.findOne({
                     _id: conversationId,
                     'participants.user': socket.userId
-                });
+                }).populate('participants.user', 'username email avatar role isOnline lastSeen');
 
                 if (!conversation) {
                     socket.emit('error', { message: 'Conversation not found' });
@@ -384,7 +385,7 @@ const socketService = (io) => {
                 const conversation = await Conversation.findOne({
                     _id: conversationId,
                     'participants.user': socket.userId
-                });
+                }).populate('participants.user', 'username email avatar role isOnline lastSeen');
 
                 if (!conversation) {
                     socket.emit('error', { message: 'Conversation not found' });
@@ -401,6 +402,45 @@ const socketService = (io) => {
             } catch (error) {
                 console.error('Error marking conversation as read:', error);
                 socket.emit('error', { message: 'Error marking conversation as read' });
+            }
+        });
+
+        // Get all conversations for user
+        socket.on('conversations:get', async (data, callback) => {
+            try {
+                const { page = 1, limit = 20 } = data || {};
+
+                const conversations = await Conversation.find({
+                    'participants.user': socket.userId,
+                    isActive: true
+                })
+                    .sort({ lastMessageAt: -1 })
+                    .skip((page - 1) * limit)
+                    .limit(parseInt(limit))
+                    .populate('participants.user', 'username email avatar role isOnline lastSeen')
+                    .populate({
+                        path: 'lastMessage',
+                        populate: {
+                            path: 'sender',
+                            select: 'username avatar'
+                        }
+                    });
+
+                if (callback) {
+                    callback({
+                        success: true,
+                        conversations,
+                        total: conversations.length
+                    });
+                }
+
+                console.log(`📱 ${socket.user.username} retrieved ${conversations.length} conversations`);
+
+            } catch (error) {
+                console.error('Error getting conversations:', error);
+                const errorMessage = 'Error retrieving conversations';
+                if (callback) callback({ success: false, error: errorMessage });
+                else socket.emit('error', { message: errorMessage });
             }
         });
 

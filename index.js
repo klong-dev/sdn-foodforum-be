@@ -40,11 +40,11 @@ app.set('socketHandler', socketHandler);
 
 // 8. Global middleware
 app.use(helmet());
-app.use(rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    message: 'Too many requests from this IP, please try again later.'
-}));
+// app.use(rateLimit({
+//     windowMs: 15 * 60 * 1000,
+//     max: 100,
+//     message: 'Too many requests from this IP, please try again later.'
+// }));
 app.use(morgan('dev'));
 
 const corsOptions = {
@@ -77,27 +77,13 @@ app.use('/', routes);
 
 // 10. 404 handler
 app.use((req, res, next) => {
-    res.status(404);
-    if (req.accepts('html')) {
-        return res.render('error', { error: '404 - Page Not Found' });
-    }
-    if (req.accepts('json')) {
-        return res.json({ error: '404 - Page Not Found' });
-    }
-    res.type('txt').send('404 - Page Not Found');
+    res.status(404).json({ error: '404 - Page Not Found' });
 });
 
 // 11. Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500);
-    if (req.accepts('html')) {
-        return res.render('error', { error: '500 - Internal Server Error' });
-    }
-    if (req.accepts('json')) {
-        return res.json({ error: '500 - Internal Server Error' });
-    }
-    res.type('txt').send('500 - Internal Server Error');
+    res.status(500).json({ error: '500 - Internal Server Error' });
 });
 
 // 12. Start server

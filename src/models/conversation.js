@@ -54,7 +54,7 @@ conversationSchema.pre('save', function (next) {
 
 // Update last message
 conversationSchema.methods.updateLastMessage = async function (messageId) {
-    const Message = require('./Message');
+    const Message = require('./message');
 
     // Check if the message is not deleted
     const message = await Message.findById(messageId);
@@ -110,4 +110,4 @@ conversationSchema.index({ 'participants.user': 1 });
 conversationSchema.index({ lastMessageAt: -1 });
 conversationSchema.index({ isActive: 1 });
 
-module.exports = mongoose.model('Conversation', conversationSchema);
+module.exports = mongoose.models.Conversation || mongoose.model('Conversation', conversationSchema);

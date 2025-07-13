@@ -2,7 +2,7 @@ const User = require('../models/users.model');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-const { setAsync, getAsync, delAsync, expireAsync } = require('../config/redis.config');
+// const { setAsync, getAsync, delAsync, expireAsync } = require('../config/redis.config');
 
 exports.createUser = async (data) => {
     const existing = await User.findOne({ $or: [{ email: data.email }, { username: data.username }] });
@@ -31,7 +31,7 @@ exports.authenticateUser = async (email, password) => {
             role: role
         },
         process.env.JWT_SECRET,
-        { expiresIn: '15m' }
+        { expiresIn: '24h' }
     );
 
     // Generate refresh token (long-lived)
@@ -39,7 +39,7 @@ exports.authenticateUser = async (email, password) => {
 
     // Store refresh token in Redis with user ID as value
     const redisKey = `refresh_token:${refreshToken}`;
-    await setAsync(redisKey, user._id.toString(), 604800); // 7 days expiry
+    // await setAsync(redisKey, user._id.toString(), 604800); // 7 days expiry
 
     return {
         accessToken,
@@ -68,7 +68,7 @@ exports.refreshAccessToken = async (refreshToken) => {
             // Removed permissions reference that was causing errors
         },
         process.env.JWT_SECRET,
-        { expiresIn: '15m' }
+        { expiresIn: '24h' }
     );
 
     return { accessToken, user };
