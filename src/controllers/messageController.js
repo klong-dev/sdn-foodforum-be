@@ -64,7 +64,6 @@ exports.getMessages = async (req, res) => {
         // Get messages with pagination
         const messages = await Message.find({
             conversation: conversationId,
-            'deleted.isDeleted': false
         })
             .sort({ createdAt: 1 })
             .skip((page - 1) * limit)
