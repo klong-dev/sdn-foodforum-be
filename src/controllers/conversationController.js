@@ -22,18 +22,18 @@ exports.createConversation = async (req, res) => {
             }
         }
 
-        // Check if conversation already exists
+        // Check if any conversation already exists (active or archived, but not deleted)
         const existingConversation = await Conversation.findOne({
             'participants.user': { $all: [currentUserId, participantId] },
-            isActive: true
+            'deleted.isDeleted': false
         });
 
         if (existingConversation) {
+            // Return existing conversation (whether active or archived)
             return res.status(200).json(existingConversation);
         }
 
-
-        // Create new conversation
+        // Create new conversation only when no conversation exists or previous was deleted
         const conversation = new Conversation({
             participants: [
                 { user: currentUserId },
@@ -90,7 +90,8 @@ exports.getUserConversations = async (req, res) => {
 
         const conversations = await Conversation.find({
             'participants.user': userId,
-            isActive: true
+            isActive: true,
+            'deleted.isDeleted': false
         })
             .sort({ lastMessageAt: -1 })
             .skip((page - 1) * limit)
@@ -152,7 +153,7 @@ exports.getConversation = async (req, res) => {
     }
 };
 
-// Archive a conversation
+// Archive a conversation (can be restored)
 exports.archiveConversation = async (req, res) => {
     try {
         const { conversationId } = req.params;
@@ -171,8 +172,101 @@ exports.archiveConversation = async (req, res) => {
         conversation.isActive = false;
         await conversation.save();
 
-        res.json({ message: 'Conversation archived successfully' });
+        console.log(`📦 Conversation ${conversationId} archived by user ${userId}`);
+
+        res.json({
+            success: true,
+            message: 'Conversation archived successfully'
+        });
     } catch (error) {
+        console.error('Error archiving conversation:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Restore archived conversation
+exports.restoreConversation = async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+        const currentUserId = req.user.id;
+
+        // Find archived conversation (isActive: false but not deleted)
+        const conversation = await Conversation.findOne({
+            _id: conversationId,
+            'participants.user': currentUserId,
+            isActive: false,
+            'deleted.isDeleted': false
+        });
+
+        if (!conversation) {
+            return res.status(404).json({
+                error: 'Archived conversation not found or you do not have permission to restore it'
+            });
+        }
+
+        // Restore the conversation
+        conversation.isActive = true;
+        await conversation.save();
+
+        // Populate the restored conversation
+        await conversation.populate({
+            path: 'participants.user',
+            select: 'username email avatar role isOnline lastSeen'
+        });
+
+        if (conversation.lastMessage) {
+            await conversation.populate({
+                path: 'lastMessage',
+                select: 'sender content type attachments createdAt edited deleted readBy replyTo',
+                populate: {
+                    path: 'sender',
+                    select: 'username email avatar role'
+                }
+            });
+        }
+
+        console.log(`♻️ Conversation ${conversationId} restored from archive by user ${currentUserId}`);
+
+        res.status(200).json({
+            success: true,
+            message: 'Conversation restored successfully',
+            conversation
+        });
+
+    } catch (error) {
+        console.error('Error restoring conversation:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Get archived conversations (isActive: false but not deleted)
+exports.getArchivedConversations = async (req, res) => {
+    try {
+        const currentUserId = req.user.id;
+
+        const archivedConversations = await Conversation.find({
+            'participants.user': currentUserId,
+            isActive: false,
+            'deleted.isDeleted': false
+        })
+            .populate({
+                path: 'participants.user',
+                select: 'username email avatar role isOnline lastSeen'
+            })
+            .populate({
+                path: 'lastMessage',
+                select: 'sender content type attachments createdAt edited deleted readBy replyTo',
+                populate: {
+                    path: 'sender',
+                    select: 'username email avatar role'
+                }
+            })
+            .sort({ updatedAt: -1 });
+
+        res.status(200).json(archivedConversations);
+
+    } catch (error) {
+        console.error('Error fetching archived conversations:', error);
         res.status(500).json({ error: error.message });
     }
 };
@@ -194,6 +288,41 @@ exports.getUnreadCount = async (req, res) => {
 
         res.json({ unreadCount: totalUnread });
     } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Delete conversation (permanent, cannot be restored)
+exports.deleteConversation = async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+        const currentUserId = req.user.id;
+
+        // Find conversation and verify user is participant
+        const conversation = await Conversation.findOne({
+            _id: conversationId,
+            'participants.user': currentUserId,
+            'deleted.isDeleted': false
+        });
+
+        if (!conversation) {
+            return res.status(404).json({
+                error: 'Conversation not found or you do not have permission to delete it'
+            });
+        }
+
+        // Permanently soft delete the conversation (cannot be restored)
+        await conversation.softDelete(currentUserId);
+
+        console.log(`🗑️ Conversation ${conversationId} permanently deleted by user ${currentUserId}`);
+
+        res.status(200).json({
+            success: true,
+            message: 'Conversation deleted permanently'
+        });
+
+    } catch (error) {
+        console.error('Error deleting conversation:', error);
         res.status(500).json({ error: error.message });
     }
 };

@@ -39,6 +39,22 @@ const conversationSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true
+    },
+    // Soft delete fields
+    deleted: {
+        isDeleted: {
+            type: Boolean,
+            default: false
+        },
+        deletedAt: {
+            type: Date,
+            default: null
+        },
+        deletedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: null
+        }
     }
 }, {
     timestamps: true
@@ -105,9 +121,36 @@ conversationSchema.methods.isParticipant = function (userId) {
     return this.participants.some(p => p.user.toString() === userId.toString());
 };
 
+// Soft delete method - delete entire conversation
+conversationSchema.methods.softDelete = async function (userId) {
+    this.deleted.isDeleted = true;
+    this.deleted.deletedAt = new Date();
+    this.deleted.deletedBy = userId;
+    this.isActive = false;
+    return await this.save();
+};
+
+// Restore method - restore entire conversation
+conversationSchema.methods.restore = async function () {
+    this.deleted.isDeleted = false;
+    this.deleted.deletedAt = null;
+    this.deleted.deletedBy = null;
+    this.isActive = true;
+    return await this.save();
+};
+
+// Query helpers - only get non-deleted conversations by default
+conversationSchema.pre(/^find/, function () {
+    // Only apply filter if not explicitly including deleted
+    if (!this.getOptions().includeDeleted) {
+        this.where({ 'deleted.isDeleted': { $ne: true } });
+    }
+});
+
 // Indexes
 conversationSchema.index({ 'participants.user': 1 });
 conversationSchema.index({ lastMessageAt: -1 });
 conversationSchema.index({ isActive: 1 });
+conversationSchema.index({ 'deleted.isDeleted': 1 });
 
 module.exports = mongoose.models.Conversation || mongoose.model('Conversation', conversationSchema);

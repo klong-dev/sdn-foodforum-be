@@ -51,7 +51,7 @@ const corsOptions = {
     origin: function (origin, callback) {
         const allowedDomains = [
             'http://localhost:8000',
-            'http://localhost:3001',
+            'http://localhost:5173',
             process.env.CLIENT_URL
         ].filter(Boolean);
         if (!origin || allowedDomains.includes(origin)) {
@@ -62,7 +62,7 @@ const corsOptions = {
         }
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     exposedHeaders: ['X-Total-Count'],
 };

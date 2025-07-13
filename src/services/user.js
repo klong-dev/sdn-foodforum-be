@@ -8,10 +8,8 @@ exports.createUser = async (data) => {
     const existing = await User.findOne({ $or: [{ email: data.email }, { username: data.username }] });
     if (existing) throw new Error('Username or email already exists');
 
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-    const userData = { ...data, password: hashedPassword };
-
-    return await new User(userData).save();
+    // Don't hash password here - the model pre-save hook will handle it
+    return await new User(data).save();
 };
 
 exports.authenticateUser = async (email, password) => {
