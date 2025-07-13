@@ -51,17 +51,18 @@ const socketService = (io) => {
         // Join conversation room
         socket.on('conversation:join', async (data) => {
             try {
-                
+
                 const { conversationId } = data;
 
-                // Verify user is participant
+                // Verify conversation exists and is valid (not deleted)
                 const conversation = await Conversation.findOne({
                     _id: conversationId,
-                    'participants.user': socket.userId
+                    'participants.user': socket.userId,
+                    'deleted.isDeleted': false
                 }).populate('participants.user', 'username email avatar role isOnline lastSeen');
 
                 if (!conversation) {
-                    socket.emit('error', { message: 'Conversation not found' });
+                    socket.emit('error', { message: 'Conversation not found or has been deleted' });
                     return;
                 }
 
@@ -92,26 +93,42 @@ const socketService = (io) => {
         // Send message via socket
         socket.on('message:send', async (data, callback) => {
             try {
-                const { conversationId, content, type = 'text', replyTo, tempId } = data;
+                const { conversationId, content, type = 'text', replyTo, tempId, attachments } = data;
 
                 if (!conversationId || !content?.trim()) {
                     const error = 'Invalid message data';
                     if (callback) callback({ success: false, error });
                     else socket.emit('error', { message: error });
                     return;
-                }
-
-                // Verify conversation
+                }                // Verify conversation exists and is valid (not deleted)
                 const conversation = await Conversation.findOne({
                     _id: conversationId,
-                    'participants.user': socket.userId
+                    'participants.user': socket.userId,
+                    'deleted.isDeleted': false
                 }).populate('participants.user', 'username email avatar role isOnline lastSeen');
 
                 if (!conversation) {
-                    const error = 'Conversation not found';
+                    const error = 'Conversation not found or has been deleted';
                     if (callback) callback({ success: false, error });
                     else socket.emit('error', { message: error });
                     return;
+                }
+
+                // If conversation is archived, reactivate it when sending message
+                if (!conversation.isActive) {
+                    conversation.isActive = true;
+                    await conversation.save();
+                    console.log(`📱 Conversation ${conversationId} reactivated by sending message from user ${socket.userId}`);
+
+                    // Notify all participants about reactivation
+                    const participants = conversation.participants.map(p => p.user.toString());
+                    participants.forEach(participantId => {
+                        io.to(participantId).emit('conversation:reactivated', {
+                            conversationId,
+                            reactivatedBy: socket.userId,
+                            reactivatedAt: new Date()
+                        });
+                    });
                 }
 
                 // Create message
@@ -120,7 +137,8 @@ const socketService = (io) => {
                     sender: socket.userId,
                     content: content.trim(),
                     type,
-                    replyTo
+                    replyTo,
+                    attachments: attachments || [],
                 });
 
                 await message.save();
@@ -297,14 +315,15 @@ const socketService = (io) => {
             try {
                 const { conversationId, messageIds } = data;
 
-                // Verify conversation access
+                // Verify conversation exists and is valid (not deleted)
                 const conversation = await Conversation.findOne({
                     _id: conversationId,
-                    'participants.user': socket.userId
+                    'participants.user': socket.userId,
+                    'deleted.isDeleted': false
                 }).populate('participants.user', 'username email avatar role isOnline lastSeen');
 
                 if (!conversation) {
-                    socket.emit('error', { message: 'Conversation not found' });
+                    socket.emit('error', { message: 'Conversation not found or has been deleted' });
                     return;
                 }
 
@@ -384,11 +403,12 @@ const socketService = (io) => {
 
                 const conversation = await Conversation.findOne({
                     _id: conversationId,
-                    'participants.user': socket.userId
+                    'participants.user': socket.userId,
+                    'deleted.isDeleted': false
                 }).populate('participants.user', 'username email avatar role isOnline lastSeen');
 
                 if (!conversation) {
-                    socket.emit('error', { message: 'Conversation not found' });
+                    socket.emit('error', { message: 'Conversation not found or has been deleted' });
                     return;
                 }
 
@@ -412,7 +432,8 @@ const socketService = (io) => {
 
                 const conversations = await Conversation.find({
                     'participants.user': socket.userId,
-                    isActive: true
+                    isActive: true,
+                    'deleted.isDeleted': false
                 })
                     .sort({ lastMessageAt: -1 })
                     .skip((page - 1) * limit)
@@ -439,6 +460,266 @@ const socketService = (io) => {
             } catch (error) {
                 console.error('Error getting conversations:', error);
                 const errorMessage = 'Error retrieving conversations';
+                if (callback) callback({ success: false, error: errorMessage });
+                else socket.emit('error', { message: errorMessage });
+            }
+        });
+
+        // Delete conversation via socket (permanent)
+        socket.on('conversation:delete', async (data, callback) => {
+            try {
+                if (!data) {
+                    const error = 'No data provided';
+                    console.error('❌ Conversation delete error:', error);
+                    if (callback) callback({ success: false, error });
+                    else socket.emit('error', { message: error });
+                    return;
+                }
+
+                const { conversationId } = data;
+
+                if (!conversationId) {
+                    const error = 'Conversation ID is required';
+                    console.error('❌ Conversation delete error:', error);
+                    if (callback) callback({ success: false, error });
+                    else socket.emit('error', { message: error });
+                    return;
+                }
+
+                // Find conversation and verify user is participant
+                const conversation = await Conversation.findOne({
+                    _id: conversationId,
+                    'participants.user': socket.userId,
+                    'deleted.isDeleted': false
+                });
+
+                if (!conversation) {
+                    const error = 'Conversation not found or you do not have permission to delete it';
+                    console.error('❌ Conversation delete error:', error);
+                    if (callback) callback({ success: false, error });
+                    else socket.emit('error', { message: error });
+                    return;
+                }
+
+                // Permanently soft delete the conversation
+                await conversation.softDelete(socket.userId);
+
+                console.log(`🗑️ Conversation ${conversationId} permanently deleted by user ${socket.userId}`);
+
+                // Notify all participants about the deletion
+                const participants = conversation.participants.map(p => p.user.toString());
+                participants.forEach(participantId => {
+                    io.to(participantId).emit('conversation:deleted', {
+                        conversationId,
+                        deletedBy: socket.userId,
+                        deletedAt: new Date()
+                    });
+                });
+
+                const response = {
+                    success: true,
+                    message: 'Conversation deleted permanently',
+                    conversationId
+                };
+
+                if (callback) callback(response);
+
+            } catch (error) {
+                console.error('❌ Error deleting conversation:', error);
+                const errorMessage = error.message || 'Error deleting conversation';
+                if (callback) callback({ success: false, error: errorMessage });
+                else socket.emit('error', { message: errorMessage });
+            }
+        });
+
+        // Archive conversation via socket
+        socket.on('conversation:archive', async (data, callback) => {
+            try {
+                if (!data) {
+                    const error = 'No data provided';
+                    console.error('❌ Conversation archive error:', error);
+                    if (callback) callback({ success: false, error });
+                    else socket.emit('error', { message: error });
+                    return;
+                }
+
+                const { conversationId } = data;
+
+                if (!conversationId) {
+                    const error = 'Conversation ID is required';
+                    console.error('❌ Conversation archive error:', error);
+                    if (callback) callback({ success: false, error });
+                    else socket.emit('error', { message: error });
+                    return;
+                }
+
+                // Find conversation and verify user is participant
+                const conversation = await Conversation.findOne({
+                    _id: conversationId,
+                    'participants.user': socket.userId,
+                    isActive: true
+                });
+
+                if (!conversation) {
+                    const error = 'Conversation not found or you do not have permission to archive it';
+                    console.error('❌ Conversation archive error:', error);
+                    if (callback) callback({ success: false, error });
+                    else socket.emit('error', { message: error });
+                    return;
+                }
+
+                // Archive the conversation
+                conversation.isActive = false;
+                await conversation.save();
+
+                console.log(`📦 Conversation ${conversationId} archived by user ${socket.userId}`);
+
+                // Notify all participants about the archiving
+                const participants = conversation.participants.map(p => p.user.toString());
+                participants.forEach(participantId => {
+                    io.to(participantId).emit('conversation:archived', {
+                        conversationId,
+                        archivedBy: socket.userId,
+                        archivedAt: new Date()
+                    });
+                });
+
+                const response = {
+                    success: true,
+                    message: 'Conversation archived successfully',
+                    conversationId
+                };
+
+                if (callback) callback(response);
+
+            } catch (error) {
+                console.error('❌ Error archiving conversation:', error);
+                const errorMessage = error.message || 'Error archiving conversation';
+                if (callback) callback({ success: false, error: errorMessage });
+                else socket.emit('error', { message: errorMessage });
+            }
+        });
+
+        // Restore archived conversation via socket
+        socket.on('conversation:restore', async (data, callback) => {
+            try {
+                if (!data) {
+                    const error = 'No data provided';
+                    console.error('❌ Conversation restore error:', error);
+                    if (callback) callback({ success: false, error });
+                    else socket.emit('error', { message: error });
+                    return;
+                }
+
+                const { conversationId } = data;
+
+                if (!conversationId) {
+                    const error = 'Conversation ID is required';
+                    console.error('❌ Conversation restore error:', error);
+                    if (callback) callback({ success: false, error });
+                    else socket.emit('error', { message: error });
+                    return;
+                }
+
+                // Find archived conversation and verify user is participant
+                const conversation = await Conversation.findOne({
+                    _id: conversationId,
+                    'participants.user': socket.userId,
+                    isActive: false,
+                    'deleted.isDeleted': false
+                });
+
+                if (!conversation) {
+                    const error = 'Archived conversation not found or you do not have permission to restore it';
+                    console.error('❌ Conversation restore error:', error);
+                    if (callback) callback({ success: false, error });
+                    else socket.emit('error', { message: error });
+                    return;
+                }
+
+                // Restore the conversation
+                conversation.isActive = true;
+                await conversation.save();
+
+                // Populate the restored conversation
+                await conversation.populate({
+                    path: 'participants.user',
+                    select: 'username email avatar role isOnline lastSeen'
+                });
+
+                if (conversation.lastMessage) {
+                    await conversation.populate({
+                        path: 'lastMessage',
+                        select: 'sender content type attachments createdAt edited deleted readBy replyTo',
+                        populate: {
+                            path: 'sender',
+                            select: 'username email avatar role'
+                        }
+                    });
+                }
+
+                console.log(`♻️ Conversation ${conversationId} restored from archive by user ${socket.userId}`);
+
+                // Notify all participants about the restoration
+                const participants = conversation.participants.map(p => p.user.toString());
+                participants.forEach(participantId => {
+                    io.to(participantId).emit('conversation:restored', {
+                        conversation: conversation.toObject(),
+                        restoredBy: socket.userId,
+                        restoredAt: new Date()
+                    });
+                });
+
+                const response = {
+                    success: true,
+                    message: 'Conversation restored successfully',
+                    conversation: conversation.toObject()
+                };
+
+                if (callback) callback(response);
+
+            } catch (error) {
+                console.error('❌ Error restoring conversation:', error);
+                const errorMessage = error.message || 'Error restoring conversation';
+                if (callback) callback({ success: false, error: errorMessage });
+                else socket.emit('error', { message: errorMessage });
+            }
+        });
+
+        // Get archived conversations via socket
+        socket.on('conversations:archived:get', async (data, callback) => {
+            try {
+                const archivedConversations = await Conversation.find({
+                    'participants.user': socket.userId,
+                    isActive: false,
+                    'deleted.isDeleted': false
+                })
+                    .populate({
+                        path: 'participants.user',
+                        select: 'username email avatar role isOnline lastSeen'
+                    })
+                    .populate({
+                        path: 'lastMessage',
+                        select: 'sender content type attachments createdAt edited deleted readBy replyTo',
+                        populate: {
+                            path: 'sender',
+                            select: 'username email avatar role'
+                        }
+                    })
+                    .sort({ updatedAt: -1 });
+
+                console.log(`📋 Retrieved ${archivedConversations.length} archived conversations for user ${socket.userId}`);
+
+                const response = {
+                    success: true,
+                    conversations: archivedConversations
+                };
+
+                if (callback) callback(response);
+
+            } catch (error) {
+                console.error('❌ Error getting archived conversations:', error);
+                const errorMessage = error.message || 'Error getting archived conversations';
                 if (callback) callback({ success: false, error: errorMessage });
                 else socket.emit('error', { message: errorMessage });
             }
