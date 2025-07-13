@@ -5,7 +5,7 @@ const Conversation = require('../models/conversation');
 exports.sendMessage = async (req, res) => {
     try {
         const { conversationId, content, type = 'text', attachments = [], replyTo } = req.body;
-        const senderId = req.user._id;  // Extracted from JWT by authMiddleware
+        const senderId = req.user.id;  // Extracted from JWT by authMiddleware
 
         // Create new message
         const message = new Message({
@@ -32,7 +32,11 @@ exports.sendMessage = async (req, res) => {
         }
 
         // Populate sender info before sending response
-        await message.populate('sender', 'username profilePicture');
+        await message.populate('sender', 'username email avatar role _id');
+        if (message.replyTo) {
+            await message.populate('replyTo', 'content sender');
+            await message.populate('replyTo.sender', 'username avatar');
+        }
 
         res.status(201).json(message);
     } catch (error) {
@@ -45,7 +49,7 @@ exports.getMessages = async (req, res) => {
     try {
         const { conversationId } = req.params;
         const { page = 1, limit = 20 } = req.query;
-        const userId = req.user._id;
+        const userId = req.user.id;
 
         // Verify user is part of the conversation
         const conversation = await Conversation.findById(conversationId);
@@ -62,11 +66,18 @@ exports.getMessages = async (req, res) => {
             conversation: conversationId,
             'deleted.isDeleted': false
         })
-            .sort({ createdAt: -1 })
+            .sort({ createdAt: 1 })
             .skip((page - 1) * limit)
             .limit(parseInt(limit))
-            .populate('sender', 'username profilePicture')
-            .populate('replyTo');
+            .populate('sender', 'username email avatar role _id')
+            .populate({
+                path: 'replyTo',
+                populate: {
+                    path: 'sender',
+                    select: 'username avatar _id'
+                }
+            });
+        console.log(messages);
 
         // Mark messages as read
         for (const message of messages) {
@@ -87,7 +98,7 @@ exports.editMessage = async (req, res) => {
     try {
         const { messageId } = req.params;
         const { content } = req.body;
-        const userId = req.user._id;
+        const userId = req.user.id;
 
         const message = await Message.findById(messageId);
         if (!message) {
@@ -117,7 +128,7 @@ exports.editMessage = async (req, res) => {
 exports.deleteMessage = async (req, res) => {
     try {
         const { messageId } = req.params;
-        const userId = req.user._id;
+        const userId = req.user.id;
 
         const message = await Message.findById(messageId);
         if (!message) {
@@ -136,7 +147,7 @@ exports.deleteMessage = async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
-}; 
+};
 
 
 // Get replies to a specific message
@@ -144,7 +155,7 @@ exports.getRepliesToMessage = async (req, res) => {
     try {
         const { messageId } = req.params;
         const { page = 1, limit = 10 } = req.query;
-        const userId = req.user._id;
+        const userId = req.user.id;
 
         // First, get the original message to verify permissions
         const originalMessage = await Message.findById(messageId);
