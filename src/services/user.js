@@ -89,6 +89,33 @@ exports.getUserById = async (id) => {
     return await User.findById(id);
 };
 
+exports.getCurrentUserDetails = async (id) => {
+    const Post = require('../models/posts.model');
+
+    const user = await User.findById(id).select('-password');
+    if (!user) return null;
+
+    // Get user's posts count
+    const userPostsCount = await Post.countDocuments({ author: id });
+
+    // Return user data with additional details
+    return {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+        bio: user.bio,
+        phone_number: user.phone_number,
+        isOnline: user.isOnline,
+        lastSeen: user.lastSeen,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        postsCount: userPostsCount,
+        favoritesCount: user.favoritePost ? user.favoritePost.length : 0
+    };
+};
+
 exports.updateUser = async (id, data) => {
     // If password is being updated, hash it
     if (data.password) {
@@ -99,4 +126,38 @@ exports.updateUser = async (id, data) => {
 
 exports.deleteUser = async (id) => {
     return await User.findByIdAndDelete(id);
+};
+
+// Favorite posts functionality
+exports.addToFavorites = async (userId, postId) => {
+    const user = await User.findById(userId);
+    if (!user) throw new Error('User not found');
+
+    if (!user.favoritePost.includes(postId)) {
+        user.favoritePost.push(postId);
+        await user.save();
+    }
+    return user;
+};
+
+exports.removeFromFavorites = async (userId, postId) => {
+    const user = await User.findById(userId);
+    if (!user) throw new Error('User not found');
+
+    user.favoritePost = user.favoritePost.filter(id => !id.equals(postId));
+    await user.save();
+    return user;
+};
+
+exports.getUserFavoritePosts = async (userId) => {
+    const user = await User.findById(userId)
+        .populate({
+            path: 'favoritePost',
+            populate: [
+                { path: 'author', select: 'username email' },
+                { path: 'category' },
+                { path: 'images' }
+            ]
+        });
+    return user ? user.favoritePost : [];
 };

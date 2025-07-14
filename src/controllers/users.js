@@ -9,6 +9,25 @@ exports.getUsers = async (req, res) => {
     }
 };
 
+exports.getCurrentUser = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const user = await userService.getCurrentUserDetails(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json({
+            message: 'User data retrieved successfully',
+            user: user
+        });
+    } catch (error) {
+        console.error('Get current user error:', error);
+        res.status(500).json({ error: 'Failed to retrieve user data' });
+    }
+};
+
 exports.getUserById = async (req, res) => {
     try {
         const user = await userService.getUserById(req.params.id);
@@ -41,6 +60,51 @@ exports.deleteUser = async (req, res) => {
         const deletedUser = await userService.deleteUser(req.params.id);
         if (!deletedUser) return res.status(404).json({ error: 'User not found' });
         res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Favorite posts functionality
+exports.addToFavorites = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { postId } = req.params;
+
+        const user = await userService.addToFavorites(userId, postId);
+        res.json({
+            message: 'Post added to favorites successfully',
+            favoritePost: user.favoritePost
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.removeFromFavorites = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { postId } = req.params;
+
+        const user = await userService.removeFromFavorites(userId, postId);
+        res.json({
+            message: 'Post removed from favorites successfully',
+            favoritePost: user.favoritePost
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getFavoritePosts = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const favoritePosts = await userService.getUserFavoritePosts(userId);
+
+        res.json({
+            message: 'Favorite posts retrieved successfully',
+            posts: favoritePosts
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

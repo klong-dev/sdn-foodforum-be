@@ -7,11 +7,18 @@ const postService = {
     },
 
     getAllPosts: async () => {
-        return await post.find({ status: { $ne: 'deleted' } }).populate('author');
+        return await post.find({ status: { $ne: 'deleted' } })
+            .populate('author', 'username email')
+            .populate('category')
+            .populate('images')
+            .sort({ createdAt: -1 });
     },
 
     getPostById: async (id) => {
-        return await post.findById(id).populate('author');
+        return await post.findById(id)
+            .populate('author', 'username email')
+            .populate('category')
+            .populate('images');
     },
 
     updatePost: async (id, postData) => {
@@ -27,6 +34,43 @@ const postService = {
 
     getPostsByUser: async (userId) => {
         return await post.find({ author: userId }).populate('author');
+    },
+
+    getPostsByCategory: async (categoryId) => {
+        return await post.find({
+            category: categoryId,
+            status: { $ne: 'deleted' }
+        })
+            .populate('author', 'username email')
+            .populate('category')
+            .populate('images')
+            .sort({ createdAt: -1 });
+    },
+
+    getPostsByFilter: async (filter) => {
+        let sortCriteria = {};
+        let query = { status: { $ne: 'deleted' } };
+
+        switch (filter) {
+            case 'hot':
+                // Sort by votes and recent activity
+                sortCriteria = { votes: -1, createdAt: -1 };
+                break;
+            case 'new':
+                sortCriteria = { createdAt: -1 };
+                break;
+            case 'top':
+                sortCriteria = { votes: -1 };
+                break;
+            default:
+                sortCriteria = { createdAt: -1 };
+        }
+
+        return await post.find(query)
+            .populate('author', 'username email')
+            .populate('category')
+            .populate('images')
+            .sort(sortCriteria);
     },
 };
 module.exports = postService;

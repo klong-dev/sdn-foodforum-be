@@ -44,7 +44,7 @@ const createVote = async (data) => {
 
 
 
-const getVotes = async (id) => {
+const getVotes = async (id, userId = null) => {
     const upvotes = await Vote.countDocuments({
         target_id: id,
         vote_type: 'upvote'
@@ -57,12 +57,24 @@ const getVotes = async (id) => {
 
     const netVote = upvotes - downvotes;
 
-    return {
+    const result = {
         target_id: id,
         upvotes,
         downvotes,
         netVote,
+        userVote: null
     }
+
+    // If userId is provided, check user's current vote
+    if (userId) {
+        const userVote = await Vote.findOne({
+            user_id: userId,
+            target_id: id
+        });
+        result.userVote = userVote ? userVote.vote_type : null;
+    }
+
+    return result;
 }
 
 
@@ -82,4 +94,12 @@ const deleteVote = async (data) => {
     return deleted
 }
 
-module.exports = { createVote, getVotes, deleteVote }
+const getUserVote = async (userId, targetId) => {
+    const vote = await Vote.findOne({
+        user_id: userId,
+        target_id: targetId
+    });
+    return vote;
+};
+
+module.exports = { createVote, getVotes, deleteVote, getUserVote }

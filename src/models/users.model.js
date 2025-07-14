@@ -40,7 +40,11 @@ const userSchema = new Schema({
     socketId: {
         type: String,
         default: null
-    }
+    },
+    favoritePost: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Post'
+    }]
 }, {
     timestamps: true
 });
