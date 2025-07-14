@@ -74,3 +74,33 @@ exports.logout = async (req, res) => {
     }
 };
 
+// Get current user endpoint
+exports.getCurrentUser = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const user = await userService.getUserById(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Return user data without sensitive information
+        const userData = {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+        };
+
+        res.json({
+            message: 'User data retrieved successfully',
+            user: userData
+        });
+    } catch (error) {
+        console.error('Get current user error:', error);
+        res.status(500).json({ error: 'Failed to retrieve user data' });
+    }
+};
+

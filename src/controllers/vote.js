@@ -3,10 +3,14 @@ const { createVote, getVotes, deleteVote } = require('../services/vote')
 
 const create = async (req, res) => {
     try {
-        const vote = await createVote(req.body)
+        const voteData = {
+            ...req.body,
+            user_id: req.user.id // Get user ID from authenticated request
+        }
+        const vote = await createVote(voteData)
         if (vote) {
             res.status(200).json({
-                message: `Created vote succesfuly!`,
+                message: `Created vote successfully!`,
                 vote
             })
         }
@@ -17,11 +21,13 @@ const create = async (req, res) => {
 
 const get = async (req, res) => {
     try {
-        const result = await getVotes(req.params.targetId)
+        // Get user ID if authenticated, otherwise null
+        const userId = req.user ? req.user.id : null;
+        const result = await getVotes(req.params.targetId, userId)
 
         if (result) {
             res.status(200).json({
-                message: `This is the number of votes of ${req.params.targetId}`,
+                message: `Retrieved votes for ${req.params.targetId}`,
                 result
             })
         }
@@ -32,11 +38,15 @@ const get = async (req, res) => {
 
 const remove = async (req, res) => {
     try {
-        const result = await deleteVote(req.body)
+        const deleteData = {
+            ...req.body,
+            user_id: req.user.id // Get user ID from authenticated request
+        }
+        const result = await deleteVote(deleteData)
 
         if (result) {
             res.status(200).json({
-                message: 'Deleted succesfully',
+                message: 'Deleted successfully',
                 result
             })
         }

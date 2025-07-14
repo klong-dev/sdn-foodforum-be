@@ -8,6 +8,8 @@ const { upload } = require('../middlewares/upload.middleware');
 const { requireRole, requirePermission } = authMiddleware;
 
 router.get('/', postController.getPosts);
+router.get('/filter', postController.getPostsByFilter);
+router.get('/category/:categoryId', postController.getPostsByCategory);
 router.get('/:id', postController.getPostById);
 router.get('/user/:userId', postController.getPostsByUser);
 router.post('/', authMiddleware.verifyToken, upload.single('image'), validatePost, postController.createPost);
