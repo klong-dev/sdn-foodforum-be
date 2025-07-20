@@ -82,4 +82,33 @@ const deleteVote = async (data) => {
     return deleted
 }
 
-module.exports = { createVote, getVotes, deleteVote }
+const getUserVote = async (user_id, target_id) => {
+    return await Vote.findOne({ user_id, target_id });
+};
+
+const getTopPostsByVotes = async (period = 'day', limit = 10) => {
+    const now = new Date();
+    let start;
+    if (period === 'day') {
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    } else if (period === 'week') {
+        const day = now.getDay();
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day);
+    } else if (period === 'month') {
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+    } else {
+        start = new Date(0);
+    }
+    // Lấy tổng upvote cho mỗi post trong khoảng thời gian
+    const pipeline = [
+        { $match: { target_type: 'post', vote_type: 'upvote', createdAt: { $gte: start } } },
+        { $group: { _id: '$target_id', upvotes: { $sum: 1 } } },
+        { $sort: { upvotes: -1 } },
+        { $limit: limit },
+        { $lookup: { from: 'posts', localField: '_id', foreignField: '_id', as: 'post' } },
+        { $unwind: '$post' }
+    ];
+    return await Vote.aggregate(pipeline);
+};
+
+module.exports = { createVote, getVotes, deleteVote, getUserVote, getTopPostsByVotes };

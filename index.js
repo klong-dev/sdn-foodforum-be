@@ -27,13 +27,32 @@ const { connectDB } = require('./src/config/database.config');
 // 5. Database connection
 connectDB();
 
-// 6. CORS configuration
+// 7. Socket.io setup
+const io = socketio(server, {
+    cors: {
+        origin: process.env.CLIENT_URL,
+        methods: ["GET", "POST"]
+    }
+});
+const socketHandler = socketService(io);
+app.set('socketHandler', socketHandler);
+
+// 8. Global middleware
+app.use(helmet());
+// app.use(rateLimit({
+//     windowMs: 15 * 60 * 1000,
+//     max: 100,
+//     message: 'Too many requests from this IP, please try again later.'
+// }));
+app.use(morgan('dev'));
+
 const corsOptions = {
     origin: function (origin, callback) {
         const allowedDomains = [
             'http://localhost:8000',
-            'http://localhost:3001',
-            process.env.CLIENT_URL || 'http://localhost:5173'
+            'http://localhost:5173',
+            'http://localhost:3000',
+            process.env.CLIENT_URL
         ].filter(Boolean);
         if (!origin || allowedDomains.includes(origin)) {
             callback(null, true);
@@ -43,7 +62,7 @@ const corsOptions = {
         }
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     exposedHeaders: ['X-Total-Count'],
 };
@@ -61,32 +80,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// 8. Socket.io setup
-const io = socketio(server, {
-    cors: {
-        origin: process.env.CLIENT_URL,
-        methods: ["GET", "POST"]
-    }
-});
-const socketHandler = socketService(io);
-app.set('socketHandler', socketHandler);
-
 // 9. Routes
 app.use('/', routes);
 
 // 10. 404 handler
 app.use((req, res, next) => {
-    res.status(404);
-    // Always return JSON for API
-    return res.json({ error: '404 - Page Not Found' });
+    res.status(404).json({ error: '404 - Page Not Found' });
 });
 
 // 11. Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500);
-    // Always return JSON for API
-    return res.json({ error: err.message || '500 - Internal Server Error' });
+    res.status(500).json({ error: '500 - Internal Server Error' });
 });
 
 // 12. Start server

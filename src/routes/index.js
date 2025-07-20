@@ -7,6 +7,7 @@ const voteRoute = require('./votes.route')
 const postsRoute = require('./post.route');
 const conversationRoute = require('./conversationRoutes');
 const messageRoute = require('./messageRoutes');
+const commentRoute = require('./comment.route');
 
 
 // Mount routes
@@ -17,5 +18,6 @@ router.use('/api/messages', messageRoute);
 router.use('/api/test', testRoute);
 router.use('/api/posts', postsRoute);
 router.use('/api/vote', voteRoute)
+router.use('/api/comments', commentRoute);
 
 module.exports = router; 

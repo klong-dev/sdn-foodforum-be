@@ -6,8 +6,15 @@ const postService = {
         return await newPost.save();
     },
 
-    getAllPosts: async () => {
-        return await post.find({ status: { $ne: 'deleted' } }).populate('author');
+    getAllPosts: async ({ tag, search, page = 1, limit = 10 } = {}) => {
+        const query = { status: { $ne: 'deleted' } };
+        if (tag) query.tags = tag;
+        if (search) query.title = { $regex: search, $options: 'i' };
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        return await post.find(query)
+            .populate('author')
+            .skip(skip)
+            .limit(parseInt(limit));
     },
 
     getPostById: async (id) => {
@@ -27,6 +34,14 @@ const postService = {
 
     getPostsByUser: async (userId) => {
         return await post.find({ author: userId }).populate('author');
+    },
+
+    increaseView: async (id) => {
+        return await post.findByIdAndUpdate(id, { $inc: { views: 1 } }, { new: true });
+    },
+
+    getPostsByTag: async (tag) => {
+        return await post.find({ tags: tag, status: { $ne: 'deleted' } }).populate('author');
     },
 };
 module.exports = postService;

@@ -163,4 +163,4 @@ messageSchema.index({ sender: 1 });
 messageSchema.index({ 'deleted.isDeleted': 1 });
 messageSchema.index({ replyTo: 1 });
 
-module.exports = mongoose.model('Message', messageSchema);
+module.exports = mongoose.models.Message || mongoose.model('Message', messageSchema);

@@ -15,9 +15,21 @@ router.route('/')
 router.route('/unread-total')
     .get(conversationController.getUnreadCount);
 
+// Get archived conversations - must come before :conversationId to avoid conflict
+router.route('/archived/list')
+    .get(conversationController.getArchivedConversations);
+
 router.route('/:conversationId')
     .get(conversationController.getConversation)
-    .put(conversationController.archiveConversation);
+    .delete(conversationController.deleteConversation);
+
+// Archive conversation (can be restored)
+router.route('/:conversationId/archive')
+    .patch(conversationController.archiveConversation);
+
+// Restore archived conversation
+router.route('/:conversationId/restore')
+    .patch(conversationController.restoreConversation);
 
 
 module.exports = router; 
