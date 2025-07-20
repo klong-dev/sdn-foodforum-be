@@ -2,25 +2,25 @@ const User = require('../models/users.model');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-// const { setAsync, getAsync, delAsync, expireAsync } = require('../config/redis.config');
+const { setAsync, getAsync, delAsync, expireAsync } = require('../config/redis.config');
 
 exports.createUser = async (data) => {
-    const existing = await User.findOne({ $or: [{ email: data.email }, { username: data.username }] });
-    if (existing) throw new Error('Username or email already exists');
-
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-    const userData = { ...data, password: hashedPassword };
+    const userData = { ...data };
 
     return await new User(userData).save();
 };
 
 exports.authenticateUser = async (email, password) => {
+    console.log('authenticateUser called with:', { email, password });
     const user = await User.findOne({ email });
+    console.log('User found in DB:', user);
     if (!user) throw new Error('User not found');
-
+    console.log('Comparing password:', password, 'with hash:', user.password);
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log('Password match result:', isMatch);
+
     if (!isMatch) throw new Error('Invalid credentials');
-    const role = user.role || 'user'; 
+    const role = user.role || 'user';
     const accessToken = jwt.sign(
         {
             id: user._id,
@@ -31,10 +31,7 @@ exports.authenticateUser = async (email, password) => {
     );
 
     const refreshToken = uuidv4();
-
-    // Store refresh token in Redis with user ID as value
     const redisKey = `refresh_token:${refreshToken}`;
-    // await setAsync(redisKey, user._id.toString(), 604800); // 7 days expiry
 
     return {
         accessToken,
@@ -82,7 +79,6 @@ exports.getUserById = async (id) => {
 };
 
 exports.updateUser = async (id, data) => {
-    // If password is being updated, hash it
     if (data.password) {
         data.password = await bcrypt.hash(data.password, 10);
     }

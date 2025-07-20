@@ -20,7 +20,13 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
     try {
+        // Log what is received from the frontend
+        console.log('Login attempt body:', req.body);
+
         const { email, password } = req.body;
+        // Log the extracted email and password
+        console.log('Extracted email:', email, 'Extracted password:', password);
+
         const { accessToken, refreshToken, user } = await userService.authenticateUser(email, password);
 
         // Set refresh token as HTTP-only cookie
