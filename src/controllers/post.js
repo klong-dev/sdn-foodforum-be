@@ -3,6 +3,10 @@ const postService = require('../services/postService.js');
 const postController = {
     createPost: async (req, res) => {
         try {
+            // Prevent banned users from posting
+            if (req.user.status === 'banned') {
+                return res.status(403).json({ message: 'Your account is banned and cannot create posts.' });
+            }
             const userId = req.user.id;
             if (!userId) {
                 return res.status(401).json({ message: 'Unauthorized' });
