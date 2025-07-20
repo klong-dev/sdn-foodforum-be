@@ -20,4 +20,4 @@ router.use('/api/posts', postsRoute);
 router.use('/api/vote', voteRoute)
 router.use('/api/comments', commentRoute);
 
-module.exports = router;
+module.exports = router; 

@@ -3,12 +3,16 @@ const postService = require('../services/postService.js');
 const postController = {
     createPost: async (req, res) => {
         try {
+            // Prevent banned users from posting
+            if (req.user.status === 'banned') {
+                return res.status(403).json({ message: 'Your account is banned and cannot create posts.' });
+            }
             const userId = req.user.id;
             if (!userId) {
                 return res.status(401).json({ message: 'Unauthorized' });
             }
             const postData = req.body;
-            
+
             // Xử lý ảnh: ưu tiên file upload, nếu không có thì lấy từ body (Cloudinary links)
             if (req.file) {
                 postData.image = [req.file.path];
@@ -18,14 +22,16 @@ const postController = {
             } else {
                 postData.image = [];
             }
-            
+
             // Đảm bảo các trường mới được nhận từ body
             postData.tags = req.body.tags || [];
             postData.ingredients = req.body.ingredients || [];
             postData.instructions = req.body.instructions || '';
-            
+
             const newPost = await postService.createPost(userId, postData);
-            res.status(201).json(newPost);
+            // Populate author before returning
+            const populatedPost = await newPost.populate('author');
+            res.status(201).json(populatedPost);
         } catch (error) {
             res.status(500).json({ message: error.message });
         }
@@ -58,7 +64,7 @@ const postController = {
     updatePost: async (req, res) => {
         try {
             const postData = req.body;
-            
+
             // Xử lý ảnh: ưu tiên file upload, nếu không có thì lấy từ body (Cloudinary links)
             if (req.file) {
                 postData.image = [req.file.path];
@@ -68,11 +74,11 @@ const postController = {
             } else {
                 postData.image = [];
             }
-            
+
             postData.tags = req.body.tags || [];
             postData.ingredients = req.body.ingredients || [];
             postData.instructions = req.body.instructions || '';
-            
+
             const updatedPost = await postService.updatePost(req.params.id, postData);
             if (!updatedPost) {
                 return res.status(404).json({ message: 'Post not found' });
@@ -85,12 +91,20 @@ const postController = {
 
     deletePost: async (req, res) => {
         try {
-            const deletedPost = await postService.deletePost(req.params.id);
-            if (!deletedPost) {
+            const post = await postService.getPostById(req.params.id);
+            if (!post) {
                 return res.status(404).json({ message: 'Post not found' });
             }
-            res.status(204).send();
+
+            // Allow if admin or post author
+            if (req.user.role === 'admin' || post.author._id.toString() === req.user.id) {
+                const deletedPost = await postService.deletePost(req.params.id);
+                return res.status(204).send();
+            } else {
+                return res.status(403).json({ message: 'You are not allowed to delete this post.' });
+            }
         } catch (error) {
+            console.error('Delete post error:', error);
             res.status(500).json({ message: error.message });
         }
     },
