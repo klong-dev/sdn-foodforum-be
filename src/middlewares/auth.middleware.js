@@ -46,7 +46,8 @@ exports.requirePermission = (permission) => {
             return res.status(401).json({ error: 'Authentication required' });
         }
 
-        if (req.user.permissions.includes(permission)) {
+        // Fix: handle missing permissions array
+        if (Array.isArray(req.user.permissions) && req.user.permissions.includes(permission)) {
             return next();
         }
 

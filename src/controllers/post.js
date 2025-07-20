@@ -87,12 +87,20 @@ const postController = {
 
     deletePost: async (req, res) => {
         try {
-            const deletedPost = await postService.deletePost(req.params.id);
-            if (!deletedPost) {
+            const post = await postService.getPostById(req.params.id);
+            if (!post) {
                 return res.status(404).json({ message: 'Post not found' });
             }
-            res.status(204).send();
+
+            // Allow if admin or post author
+            if (req.user.role === 'admin' || post.author._id.toString() === req.user.id) {
+                const deletedPost = await postService.deletePost(req.params.id);
+                return res.status(204).send();
+            } else {
+                return res.status(403).json({ message: 'You are not allowed to delete this post.' });
+            }
         } catch (error) {
+            console.error('Delete post error:', error);
             res.status(500).json({ message: error.message });
         }
     },
