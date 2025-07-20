@@ -84,3 +84,25 @@ exports.uploadAvatar = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+// Admin-only: Update user status
+exports.updateUserStatus = async (req, res) => {
+    try {
+        // Only allow admin
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Only admin can change user status.' });
+        }
+        const { id } = req.params;
+        const { status } = req.body;
+        if (!['active', 'banned'].includes(status)) {
+            return res.status(400).json({ error: 'Invalid status value.' });
+        }
+        const user = await userService.updateUser(id, { status });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json({ message: 'User status updated successfully', user });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
