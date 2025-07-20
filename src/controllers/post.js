@@ -8,7 +8,7 @@ const postController = {
                 return res.status(401).json({ message: 'Unauthorized' });
             }
             const postData = req.body;
-            
+
             // Xử lý ảnh: ưu tiên file upload, nếu không có thì lấy từ body (Cloudinary links)
             if (req.file) {
                 postData.image = [req.file.path];
@@ -18,14 +18,16 @@ const postController = {
             } else {
                 postData.image = [];
             }
-            
+
             // Đảm bảo các trường mới được nhận từ body
             postData.tags = req.body.tags || [];
             postData.ingredients = req.body.ingredients || [];
             postData.instructions = req.body.instructions || '';
-            
+
             const newPost = await postService.createPost(userId, postData);
-            res.status(201).json(newPost);
+            // Populate author before returning
+            const populatedPost = await newPost.populate('author');
+            res.status(201).json(populatedPost);
         } catch (error) {
             res.status(500).json({ message: error.message });
         }
@@ -58,7 +60,7 @@ const postController = {
     updatePost: async (req, res) => {
         try {
             const postData = req.body;
-            
+
             // Xử lý ảnh: ưu tiên file upload, nếu không có thì lấy từ body (Cloudinary links)
             if (req.file) {
                 postData.image = [req.file.path];
@@ -68,11 +70,11 @@ const postController = {
             } else {
                 postData.image = [];
             }
-            
+
             postData.tags = req.body.tags || [];
             postData.ingredients = req.body.ingredients || [];
             postData.instructions = req.body.instructions || '';
-            
+
             const updatedPost = await postService.updatePost(req.params.id, postData);
             if (!updatedPost) {
                 return res.status(404).json({ message: 'Post not found' });
