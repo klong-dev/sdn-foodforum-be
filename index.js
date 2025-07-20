@@ -52,6 +52,7 @@ const corsOptions = {
         const allowedDomains = [
             'http://localhost:8000',
             'http://localhost:5173',
+            'http://localhost:3000',
             process.env.CLIENT_URL
         ].filter(Boolean);
         if (!origin || allowedDomains.includes(origin)) {

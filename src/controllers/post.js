@@ -8,9 +8,22 @@ const postController = {
                 return res.status(401).json({ message: 'Unauthorized' });
             }
             const postData = req.body;
+            
+            // Xử lý ảnh: ưu tiên file upload, nếu không có thì lấy từ body (Cloudinary links)
             if (req.file) {
-                postData.image = req.file.path;
+                postData.image = [req.file.path];
+            } else if (req.body.image) {
+                // Cho phép nhận link ảnh từ Cloudinary từ frontend (có thể là string hoặc array)
+                postData.image = Array.isArray(req.body.image) ? req.body.image : [req.body.image];
+            } else {
+                postData.image = [];
             }
+            
+            // Đảm bảo các trường mới được nhận từ body
+            postData.tags = req.body.tags || [];
+            postData.ingredients = req.body.ingredients || [];
+            postData.instructions = req.body.instructions || '';
+            
             const newPost = await postService.createPost(userId, postData);
             res.status(201).json(newPost);
         } catch (error) {
@@ -20,7 +33,9 @@ const postController = {
 
     getPosts: async (req, res) => {
         try {
-            const posts = await postService.getAllPosts();
+            // Hỗ trợ filter theo tag, tìm kiếm theo tiêu đề, phân trang
+            const { tag, search, page = 1, limit = 10 } = req.query;
+            const posts = await postService.getAllPosts({ tag, search, page, limit });
             res.status(200).json(posts);
         } catch (error) {
             res.status(500).json({ message: error.message });
@@ -33,6 +48,7 @@ const postController = {
             if (!post) {
                 return res.status(404).json({ message: 'Post not found' });
             }
+            await postService.increaseView(req.params.id); // Tăng views
             res.status(200).json(post);
         } catch (error) {
             res.status(500).json({ message: error.message });
@@ -42,9 +58,21 @@ const postController = {
     updatePost: async (req, res) => {
         try {
             const postData = req.body;
+            
+            // Xử lý ảnh: ưu tiên file upload, nếu không có thì lấy từ body (Cloudinary links)
             if (req.file) {
-                postData.image = req.file.path;
+                postData.image = [req.file.path];
+            } else if (req.body.image) {
+                // Cho phép nhận link ảnh từ Cloudinary từ frontend (có thể là string hoặc array)
+                postData.image = Array.isArray(req.body.image) ? req.body.image : [req.body.image];
+            } else {
+                postData.image = [];
             }
+            
+            postData.tags = req.body.tags || [];
+            postData.ingredients = req.body.ingredients || [];
+            postData.instructions = req.body.instructions || '';
+            
             const updatedPost = await postService.updatePost(req.params.id, postData);
             if (!updatedPost) {
                 return res.status(404).json({ message: 'Post not found' });
@@ -75,6 +103,16 @@ const postController = {
             res.status(500).json({
                 message: error.message
             });
+        }
+    },
+
+    getPostsByTag: async (req, res) => {
+        try {
+            const tag = req.params.tag;
+            const posts = await postService.getPostsByTag(tag);
+            res.status(200).json(posts);
+        } catch (error) {
+            res.status(500).json({ message: error.message });
         }
     },
 };

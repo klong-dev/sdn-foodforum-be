@@ -119,7 +119,7 @@ const socketService = (io) => {
                     conversation.isActive = true;
                     await conversation.save();
                     console.log(`📱 Conversation ${conversationId} reactivated by sending message from user ${socket.userId}`);
-
+                    
                     // Notify all participants about reactivation
                     const participants = conversation.participants.map(p => p.user.toString());
                     participants.forEach(participantId => {

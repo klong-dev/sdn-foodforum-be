@@ -20,6 +20,10 @@ const commentSchema = new mongoose.Schema({
         ref: 'Comment',
         default: null
     },
+    deleted: {
+        type: Boolean,
+        default: false
+    },
 }, { timestamps: true })
 
 module.exports = mongoose.model('Comment', commentSchema)
