@@ -27,7 +27,14 @@ exports.login = async (req, res) => {
 
         res.json({
             message: 'Login successful',
-            accessToken: accessToken
+            accessToken: accessToken,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+                avatar: user.avatar
+            }
         });
     } catch (error) {
         if (error.message === 'User not found') {
