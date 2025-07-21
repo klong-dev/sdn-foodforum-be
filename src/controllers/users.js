@@ -106,3 +106,13 @@ exports.updateUserStatus = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+// Get all posts by the current user
+exports.getCurrentUserPosts = async (req, res) => {
+    try {
+        const posts = await userService.getCurrentUserPosts(req.user.id);
+        res.json(posts);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};

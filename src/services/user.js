@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { setAsync, getAsync, delAsync, expireAsync } = require('../config/redis.config');
+const Post = require('../models/posts.model');
 
 exports.createUser = async (data) => {
     const userData = { ...data };
@@ -87,4 +88,9 @@ exports.updateUser = async (id, data) => {
 
 exports.deleteUser = async (id) => {
     return await User.findByIdAndDelete(id);
+};
+
+// Fetch all posts by the current user
+exports.getCurrentUserPosts = async (userId) => {
+    return await Post.find({ author: userId });
 };
