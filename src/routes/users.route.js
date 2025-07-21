@@ -6,6 +6,7 @@ const uploadMiddleware = require('../middlewares/upload.middleware');
 
 // Get current user profile (requires authentication)
 router.get('/me', authMiddleware.verifyToken, userController.getCurrentUser);
+router.get('/me/posts', authMiddleware.verifyToken, userController.getCurrentUserPosts);
 
 
 // CRUD routes
