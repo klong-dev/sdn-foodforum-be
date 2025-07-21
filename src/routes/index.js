@@ -24,4 +24,4 @@ router.use('/api/comments', commentRoute);
 router.use('/api/upload', uploadRoute);
 router.use('/api/categories', categoryRoute);
 
-module.exports = router;
+module.exports = router; 

@@ -20,10 +20,23 @@ const userSchema = new Schema({
         type: String,
         required: true,
     },
+    avatar: {
+        type: String,
+        default: null,
+    },
+    phone_number: {
+        type: String,
+        default: null,
+    },
     role: {
         type: String,
         enum: ['user', 'moderator', 'admin'],
         default: 'user',
+    },
+    status: {
+        type: String,
+        enum: ['active', 'banned'],
+        default: 'active',
     },
     avatar: {
         type: String,
@@ -40,6 +53,12 @@ const userSchema = new Schema({
     socketId: {
         type: String,
         default: null
+    },
+    bio: {
+        type: String,
+        default: '',
+        trim: true,
+        maxlength: [300, 'Bio cannot be more than 300 characters']
     }
 }, {
     timestamps: true
