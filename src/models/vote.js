@@ -29,5 +29,4 @@ const voteSchema = new mongoose.Schema({
     }
 }, { timestamps: true })
 
-module.exports = mongoose.model('Vote', voteSchema)
-
+module.exports = mongoose.models.Vote || mongoose.model('Vote', voteSchema);

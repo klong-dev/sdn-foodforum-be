@@ -5,21 +5,23 @@ const postSchema = new Schema({
     title: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        minlength: 3,
+        maxlength: 255
     },
     title_normalized: {
         type: String,
-        required: true,
         trim: true
     },
     description: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        minlength: 3,
+        maxlength: 3000
     },
     description_normalized: {
         type: String,
-        required: true,
         trim: true
     },
     thumbnailUrl: {
@@ -63,7 +65,6 @@ const postSchema = new Schema({
             },
             name_normalized: {
                 type: String,
-                required: true,
                 trim: true
             },
             quantity: {
@@ -73,7 +74,6 @@ const postSchema = new Schema({
             },
             imageUrl: {
                 type: String,
-                required: true,
                 trim: true
             }
         }
@@ -91,12 +91,10 @@ const postSchema = new Schema({
             },
             stepDescription_normalized: {
                 type: String,
-                required: true,
                 trim: true
             },
             imageUrl: {
                 type: String,
-                required: true,
                 trim: true
             }
         }
@@ -106,7 +104,11 @@ const postSchema = new Schema({
         trim: true,
         default: ''
     },
-    categoryIds: {
+    notes_normalized: {
+        type: String,
+        trim: true
+    },
+    categories: {
         type: [mongoose.Schema.Types.ObjectId],
         ref: 'Category',
         default: []
@@ -154,7 +156,16 @@ const postSchema = new Schema({
             type: Date,
             default: null
         }
+    },
+    recentViews: {
+        type: [
+            {
+                user: String,
+                viewedAt: { type: Date, default: Date.now }
+            }
+        ],
+        default: []
     }
 });
 
-module.exports = mongoose.model('Post', postSchema);
+module.exports = mongoose.models.Post || mongoose.model('Post', postSchema);
