@@ -1,4 +1,4 @@
-const post = require('../models/posts.model')
+const post = require('../models/posts')
 
 const postService = {
     createPost: async (userId, postData) => {
@@ -28,7 +28,8 @@ const postService = {
     deletePost: async (id) => {
         return await post.findByIdAndUpdate(id, {
             status: 'deleted',
-            deletedAt: new Date()
+            'deleted.isDeleted': true,
+            'deleted.deletedAt': new Date()
         }, { new: true });
     },
 

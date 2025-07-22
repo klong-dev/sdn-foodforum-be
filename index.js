@@ -15,17 +15,16 @@ const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const socketio = require('socket.io');
 
+const app = express();
+const PORT = process.env.PORT || 3000;
+const server = http.createServer(app);
+
 // 4. Your own modules
 const routes = require('./src/routes/index');
 const socketService = require('./src/services/socketService');
 const { connectDB } = require('./src/config/database.config');
 
-// 5. App initialization
-const app = express();
-const PORT = process.env.PORT;
-const server = http.createServer(app);
-
-// 6. Database connection
+// 5. Database connection
 connectDB();
 
 // 7. Socket.io setup
@@ -53,6 +52,7 @@ const corsOptions = {
             'http://localhost:8000',
             'http://localhost:5173',
             'http://localhost:3000',
+            'http://localhost:5174',
             process.env.CLIENT_URL
         ].filter(Boolean);
         if (!origin || allowedDomains.includes(origin)) {
@@ -68,10 +68,18 @@ const corsOptions = {
     exposedHeaders: ['X-Total-Count'],
 };
 app.use(cors(corsOptions));
+
+// 7. Middleware
+app.use(helmet());
+app.use(rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: 'Too many requests from this IP, please try again later.'
+}));
+app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
 
 // 9. Routes
 app.use('/', routes);
