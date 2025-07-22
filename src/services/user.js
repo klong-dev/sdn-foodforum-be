@@ -13,11 +13,16 @@ exports.createUser = async (data) => {
 
 exports.authenticateUser = async (email, password) => {
     console.log('authenticateUser called with:', { email, password });
+    console.log('authenticateUser called with:', { email, password });
     const user = await User.findOne({ email });
+    console.log('User found in DB:', user);
     console.log('User found in DB:', user);
     if (!user) throw new Error('User not found');
     console.log('Comparing password:', password, 'with hash:', user.password);
+    console.log('Comparing password:', password, 'with hash:', user.password);
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log('Password match result:', isMatch);
+
     console.log('Password match result:', isMatch);
 
     if (!isMatch) throw new Error('Invalid credentials');
