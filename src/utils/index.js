@@ -4,9 +4,6 @@ function isValidObjectId(id) {
     return mongoose.Types.ObjectId.isValid(id);
 }
 
-module.exports = {
-    isValidObjectId
-};
 function timeAgo(date) {
     const now = new Date();
     const seconds = Math.floor((now - new Date(date)) / 1000);
@@ -24,4 +21,7 @@ function timeAgo(date) {
     return `${years} year${years > 1 ? 's' : ''} ago`;
 }
 
-module.exports = { timeAgo };
+module.exports = {
+    isValidObjectId,
+    timeAgo
+};
