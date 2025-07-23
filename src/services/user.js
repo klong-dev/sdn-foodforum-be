@@ -46,6 +46,44 @@ exports.authenticateUser = async (email, password) => {
     };
 };
 
+// Specialized authentication function for admin users
+exports.authenticateAdmin = async (email, password) => {
+    const user = await User.findOne({ email });
+    if (!user) throw new Error('User not found');
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) throw new Error('Invalid credentials');
+
+    // Check if user has admin role
+    if (user.role !== 'admin') {
+        throw new Error('Access denied: Admin privileges required');
+    }
+
+    // Generate admin access token with enhanced security
+    const accessToken = jwt.sign(
+        {
+            id: user._id,
+            role: 'admin',
+            isAdmin: true // Additional flag for extra verification
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: '8h' } // Shorter expiration for admin tokens
+    );
+
+    // Generate refresh token (long-lived)
+    const refreshToken = uuidv4();
+
+    // Store refresh token in Redis with user ID as value and admin flag
+    const redisKey = `admin_refresh_token:${refreshToken}`;
+    // await setAsync(redisKey, JSON.stringify({userId: user._id.toString(), role: 'admin'}), 86400); // 1 day expiry for admin refresh tokens
+
+    return {
+        accessToken,
+        refreshToken,
+        user
+    };
+};
+
 
 // Add new method for token refresh
 exports.refreshAccessToken = async (refreshToken) => {

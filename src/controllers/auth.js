@@ -74,6 +74,42 @@ exports.logout = async (req, res) => {
     }
 };
 
+// Admin login endpoint
+exports.adminLogin = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const { accessToken, refreshToken, user } = await userService.authenticateAdmin(email, password);
+
+        // Set refresh token as HTTP-only cookie with shorter expiry for admin
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 24 * 60 * 60 * 1000 // 1 day in milliseconds
+        });
+
+        res.json({
+            message: 'Admin login successful',
+            accessToken: accessToken,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role
+            }
+        });
+    } catch (error) {
+        if (error.message === 'User not found') {
+            return res.status(404).json({ error: error.message });
+        } else if (error.message === 'Invalid credentials') {
+            return res.status(401).json({ error: error.message });
+        } else if (error.message === 'Access denied: Admin privileges required') {
+            return res.status(403).json({ error: error.message });
+        }
+        res.status(500).json({ error: error.message });
+    }
+};
+
 // Get current user endpoint
 exports.getCurrentUser = async (req, res) => {
     try {
