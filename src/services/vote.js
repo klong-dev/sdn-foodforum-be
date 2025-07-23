@@ -81,13 +81,20 @@ const getVotes = async (id, userId = null) => {
 
 
 const deleteVote = async (data) => {
-    const { user_id, target_id } = data
+    const { user_id, target_id, target_type } = data
 
     if (!user_id || !target_id) {
         throw new Error("Missing required fields")
     }
 
-    const deleted = await Vote.findOneAndDelete({ user_id, target_id })
+    const query = { user_id, target_id };
+
+    // Add target_type to query if provided
+    if (target_type) {
+        query.target_type = target_type;
+    }
+
+    const deleted = await Vote.findOneAndDelete(query)
 
     if (!deleted) throw new Error('Vote not found or already deleted')
 

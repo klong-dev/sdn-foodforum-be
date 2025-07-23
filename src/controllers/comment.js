@@ -1,5 +1,6 @@
 const Comment = require('../models/comment.model');
 const Post = require('../models/posts.model');
+const Vote = require('../models/vote.model');
 
 const commentController = {
     // Get comments for a specific post
@@ -109,6 +110,15 @@ const commentController = {
 
             // Delete replies first
             await Comment.deleteMany({ parent_id: id });
+
+            // Delete votes associated with the comment
+            await Vote.deleteMany({ target_id: id, target_type: 'comment' });
+
+            // Also delete votes for all replies
+            const replies = await Comment.find({ parent_id: id });
+            for (const reply of replies) {
+                await Vote.deleteMany({ target_id: reply._id, target_type: 'comment' });
+            }
 
             // Delete the comment
             await Comment.findByIdAndDelete(id);
