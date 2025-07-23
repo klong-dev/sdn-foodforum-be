@@ -33,7 +33,10 @@ const postService = {
     },
 
     getPostsByUser: async (userId) => {
-        return await post.find({ author: userId }).populate('author');
+        return await post.find({ author: userId })
+            .populate('author')
+            .populate('category')
+            .populate('images');
     },
 
     getPostsByCategory: async (categoryId) => {
