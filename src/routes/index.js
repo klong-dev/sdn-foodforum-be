@@ -9,6 +9,7 @@ const commentRoute = require('./comment.route');
 const conversationRoute = require('./conversationRoutes');
 const messageRoute = require('./messageRoutes');
 const categoryRoute = require('./category.route');
+const aiRoute = require('./ai.route');
 
 
 // Mount routes
@@ -21,5 +22,6 @@ router.use('/api/posts', postsRoute);
 router.use('/api/comments', commentRoute);
 router.use('/api/votes', voteRoute);
 router.use('/api/categories', categoryRoute);
+router.use('/api/ai', aiRoute);
 
 module.exports = router;
