@@ -53,7 +53,6 @@ const postController = {
 
             // Handle image upload
             if (req.file) {
-                console.log('Full file object:', JSON.stringify(req.file, null, 2));
                 const imageUrl = req.file.secure_url || req.file.url || req.file.path;
 
                 if (!imageUrl) {
@@ -61,7 +60,6 @@ const postController = {
                     throw new Error('Image upload failed - no URL found');
                 }
 
-                console.log('Image URL found:', imageUrl);
 
                 // Create PostImage document
                 const postImage = new PostImage({
@@ -212,6 +210,94 @@ const postController = {
             });
         }
     },
+
+    getReportedPosts: async (req, res) => {
+        try {
+            const posts = await postService.getReportedPosts();
+            res.status(200).json(posts);
+        } catch (error) {
+            res.status(500).json({
+                message: error.message
+            });
+        }
+    },
+
+    getPendingPosts: async (req, res) => {
+        try {
+            const posts = await postService.getPendingPosts();
+            res.status(200).json(posts);
+        } catch (error) {
+            res.status(500).json({
+                message: error.message
+            });
+        }
+    },
+
+    approvePost: async (req, res) => {
+        try {
+            // Check moderator permission
+            if (req.user.role !== 'moderator' && req.user.role !== 'admin') {
+                return res.status(403).json({
+                    message: 'Permission denied: Moderator or Admin privileges required'
+                });
+            }
+
+            const { id } = req.params;
+            const updatedPost = await postService.approvePost(id);
+
+            if (!updatedPost) {
+                return res.status(404).json({
+                    message: 'Post not found'
+                });
+            }
+
+            res.status(200).json({
+                message: 'Post approved successfully',
+                post: updatedPost
+            });
+        } catch (error) {
+            res.status(500).json({
+                message: error.message
+            });
+        }
+    },
+
+    rejectPost: async (req, res) => {
+        try {
+            // Check moderator permission
+            if (req.user.role !== 'moderator' && req.user.role !== 'admin') {
+                return res.status(403).json({
+                    message: 'Permission denied: Moderator or Admin privileges required'
+                });
+            }
+
+            const { id } = req.params;
+            const { reason } = req.body;
+
+            if (!reason) {
+                return res.status(400).json({
+                    message: 'Rejection reason is required'
+                });
+            }
+
+            const updatedPost = await postService.rejectPost(id, reason);
+
+            if (!updatedPost) {
+                return res.status(404).json({
+                    message: 'Post not found'
+                });
+            }
+
+            res.status(200).json({
+                message: 'Post rejected successfully',
+                post: updatedPost
+            });
+        } catch (error) {
+            res.status(500).json({
+                message: error.message
+            });
+        }
+    }
 };
 
 module.exports = postController;

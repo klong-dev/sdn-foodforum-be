@@ -26,10 +26,8 @@ async function debugAuth() {
             email: testUser.email,
             password: testUser.password
         });
-        console.log('✅ Login success:', loginResponse.data);
 
         const token = loginResponse.data.accessToken;
-        console.log('🔑 Token:', token);
 
         // Test protected route
         console.log('\n3. Testing protected route...');

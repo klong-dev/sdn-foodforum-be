@@ -7,7 +7,7 @@ const postService = {
     },
 
     getAllPosts: async () => {
-        return await post.find({ status: { $ne: 'deleted' } })
+        return await post.find({ status: 'approved' })
             .populate('author', 'username email')
             .populate('category')
             .populate('images')
@@ -33,16 +33,20 @@ const postService = {
     },
 
     getPostsByUser: async (userId) => {
-        return await post.find({ author: userId })
+        return await post.find({
+            author: userId,
+            status: { $ne: 'deleted' } // Exclude deleted posts but include all other statuses
+        })
             .populate('author')
             .populate('category')
-            .populate('images');
+            .populate('images')
+            .sort({ createdAt: -1 });
     },
 
     getPostsByCategory: async (categoryId) => {
         return await post.find({
             category: categoryId,
-            status: { $ne: 'deleted' }
+            status: 'approved'
         })
             .populate('author', 'username email')
             .populate('category')
@@ -52,7 +56,7 @@ const postService = {
 
     getPostsByFilter: async (filter) => {
         let sortCriteria = {};
-        let query = { status: { $ne: 'deleted' } };
+        let query = { status: 'approved' };
 
         switch (filter) {
             case 'hot':
@@ -75,5 +79,51 @@ const postService = {
             .populate('images')
             .sort(sortCriteria);
     },
+
+    getReportedPosts: async () => {
+        return await post.find({
+            $or: [
+                { status: 'flagged' },
+                { status: 'reported' }
+            ]
+        })
+            .populate('author', 'username email')
+            .populate('category')
+            .populate('images')
+            .sort({ updatedAt: -1 });
+    },
+
+    getPendingPosts: async () => {
+        return await post.find({ status: 'pending' })
+            .populate('author', 'username email')
+            .populate('category')
+            .populate('images')
+            .sort({ createdAt: -1 });
+    },
+
+    approvePost: async (postId) => {
+        return await post.findByIdAndUpdate(
+            postId,
+            {
+                status: 'approved',
+                reviewed: true,
+                reviewedAt: new Date()
+            },
+            { new: true }
+        );
+    },
+
+    rejectPost: async (postId, rejectionReason) => {
+        return await post.findByIdAndUpdate(
+            postId,
+            {
+                status: 'rejected',
+                reviewed: true,
+                rejectionReason,
+                reviewedAt: new Date()
+            },
+            { new: true }
+        );
+    }
 };
 module.exports = postService;
