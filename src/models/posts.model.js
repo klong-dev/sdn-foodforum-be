@@ -26,8 +26,8 @@ const postSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ['active', 'inactive', 'closed', 'deleted', 'archived', 'pending', 'spam', 'flagged'],
-        default: 'active'
+        enum: ['approved', 'pending', 'rejected', 'deleted', 'flagged', 'reported'],
+        default: 'pending'
     },
     category: {
         type: mongoose.Schema.Types.ObjectId,
