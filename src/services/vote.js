@@ -1,6 +1,6 @@
-const Vote = require('../models/vote')
-const Post = require('../models/posts')
-const Comment = require('../models/comment')
+const Vote = require('../models/vote.model')
+const Post = require('../models/posts.model')
+const Comment = require('../models/comment.model')
 
 const createVote = async (data) => {
     console.log(data)

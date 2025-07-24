@@ -1,20 +1,16 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const voteSchema = new mongoose.Schema({
+const postImageSchema = new Schema({
     post: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Post',
-        required: true,
+        required: true
     },
-    voter: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-    },
-    voteType: {
+    url: {
         type: String,
-        enum: ['upvote', 'downvote'],
         required: true,
+        trim: true
     },
     createdAt: {
         type: Date,
@@ -27,7 +23,6 @@ const voteSchema = new mongoose.Schema({
             return Date.now();
         }
     }
-}, { timestamps: true })
+});
 
-module.exports = mongoose.model('Vote', voteSchema)
-
+module.exports = mongoose.model('PostImage', postImageSchema);

@@ -1,33 +1,25 @@
 const mongoose = require('mongoose')
 
 const voteSchema = new mongoose.Schema({
-    post: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Post',
-        required: true,
-    },
-    voter: {
+    user_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
-    voteType: {
+    target_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+    },
+    target_type: {
+        type: String,
+        enum: ['post', 'comment'],
+        required: true,
+    },
+    vote_type: {
         type: String,
         enum: ['upvote', 'downvote'],
         required: true,
     },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
-    updatedAt: {
-        type: Date,
-        default: Date.now,
-        set: function () {
-            return Date.now();
-        }
-    }
 }, { timestamps: true })
 
 module.exports = mongoose.model('Vote', voteSchema)
-

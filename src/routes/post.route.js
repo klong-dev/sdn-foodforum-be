@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 
-const postController = require('../controllers/postController');
+const postController = require('../controllers/post');
 const authMiddleware = require('../middlewares/auth.middleware');
-const { validatePostNew } = require('../middlewares/validation.middleware');
+const { validatePost } = require('../middlewares/validation.middleware');
 const { upload } = require('../middlewares/upload.middleware');
 const { verifyToken, requireRole, requirePermission, optionalVerifyToken } = authMiddleware;
 

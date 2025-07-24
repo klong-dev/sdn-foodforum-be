@@ -5,23 +5,21 @@ const postSchema = new Schema({
     title: {
         type: String,
         required: true,
-        trim: true,
-        minlength: 3,
-        maxlength: 255
+        trim: true
     },
     title_normalized: {
         type: String,
+        required: true,
         trim: true
     },
     description: {
         type: String,
         required: true,
-        trim: true,
-        minlength: 3,
-        maxlength: 3000
+        trim: true
     },
     description_normalized: {
         type: String,
+        required: true,
         trim: true
     },
     thumbnailUrl: {
@@ -69,6 +67,7 @@ const postSchema = new Schema({
             },
             name_normalized: {
                 type: String,
+                required: true,
                 trim: true
             },
             quantity: {
@@ -78,6 +77,7 @@ const postSchema = new Schema({
             },
             imageUrl: {
                 type: String,
+                required: true,
                 trim: true
             }
         }
@@ -95,10 +95,12 @@ const postSchema = new Schema({
             },
             stepDescription_normalized: {
                 type: String,
+                required: true,
                 trim: true
             },
             imageUrl: {
                 type: String,
+                required: true,
                 trim: true
             }
         }
@@ -164,16 +166,7 @@ const postSchema = new Schema({
             type: Date,
             default: null
         }
-    },
-    recentViews: {
-        type: [
-            {
-                user: String,
-                viewedAt: { type: Date, default: Date.now }
-            }
-        ],
-        default: []
     }
 });
 
-module.exports = mongoose.models.Post || mongoose.model('Post', postSchema);
+module.exports = mongoose.model('Post', postSchema);

@@ -55,27 +55,6 @@ exports.deleteUser = async (req, res) => {
     }
 };
 
-exports.getMe = async (req, res) => {
-    try {
-        // req.user.id được gán từ middleware verifyToken
-        const user = await User.findById(req.user.id).select('-password');
-        if (!user) return res.status(404).json({ error: 'User not found' });
-        res.json(user);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
-
-exports.getUserProfile = async (req, res) => {
-    try {
-        const user = await User.findOne({ username: req.params.username }).select('-password');
-        if (!user) return res.status(404).json({ message: 'User not found' });
-        res.json(user);
-    } catch (error) {
-        res.status(500).json({ message: 'Failed to get user profile', error: error.message });
-    }
-};
-
 exports.getCurrentUser = async (req, res) => {
     try {
         // Log user ID from the token
