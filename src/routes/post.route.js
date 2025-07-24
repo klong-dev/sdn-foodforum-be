@@ -24,6 +24,6 @@ router.get('/:id', postController.getPostById);
 router.post('/', authMiddleware.verifyToken, upload.single('image'), validatePost, postController.createPost);
 router.put('/:id', authMiddleware.verifyToken, upload.single('image'), validatePost, postController.updatePost);
 router.patch('/:id', authMiddleware.verifyToken, upload.single('image'), validatePost, postController.updatePost);
-router.delete('/:id', authMiddleware.verifyToken, requirePermission('post:delete'), postController.deletePost);
+router.delete('/:id', authMiddleware.verifyToken, postController.deletePost);
 
 module.exports = router;

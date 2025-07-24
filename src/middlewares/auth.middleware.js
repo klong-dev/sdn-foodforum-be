@@ -62,6 +62,7 @@ exports.requireRole = (roles) => {
 };
 
 exports.requirePermission = (permission) => {
+    console.log(permission);
     return (req, res, next) => {
         if (!req.user) {
             return res.status(401).json({ error: 'Authentication required' });
