@@ -5,7 +5,7 @@ const postController = require('../controllers/postController');
 const authMiddleware = require('../middlewares/auth.middleware');
 const { validatePostNew } = require('../middlewares/validation.middleware');
 const { upload } = require('../middlewares/upload.middleware');
-const { verifyToken, requireRole, requirePermission } = authMiddleware;
+const { verifyToken, requireRole, requirePermission, optionalVerifyToken } = authMiddleware;
 
 /**
  * GET /api/posts?tag=...&search=...&page=...&limit=...
@@ -13,7 +13,7 @@ const { verifyToken, requireRole, requirePermission } = authMiddleware;
  */
 // router.get('/', postController.getPosts);
 // router.get('/:id', postController.getPostById);
-// router.get('/user/:userId', postController.getPostsByUser);
+router.get('/user/:userId', authMiddleware.verifyToken, postController.getPostsByUser);
 // router.get('/tag/:tag', postController.getPostsByTag);
 // router.post('/', authMiddleware.verifyToken, upload.single('image'), validatePost, postController.createPost);
 // router.put('/:id', authMiddleware.verifyToken, upload.single('image'), validatePost, postController.updatePost);
@@ -21,17 +21,20 @@ const { verifyToken, requireRole, requirePermission } = authMiddleware;
 // router.delete('/:id', authMiddleware.verifyToken, requirePermission('post:delete'), postController.deletePost);
 
 router.route('/')
-    .get(postController.getAllPosts)
+    .get(optionalVerifyToken, postController.getAllPosts)
     .post(verifyToken, validatePostNew, postController.createPost);
 
 router.route('/slugs/:slug')
     .get(postController.getPostBySlug);
 
+router.get('/:id', authMiddleware.optionalVerifyToken, postController.getPostById);
+
 // router.route('/:id')
 //     .get(postController.getPostById)
 //     .put(authMiddleware.verifyToken, upload.single('image'), validatePost, postController.updatePost)
 //     .patch(authMiddleware.verifyToken, upload.single('image'), validatePost, postController.updatePost)
-
+router.patch('/:id/approve', verifyToken, requireRole('admin'), postController.approvePost);
+router.patch('/:id/reject', verifyToken, requireRole('admin'), postController.rejectPost);
 
 
 module.exports = router;

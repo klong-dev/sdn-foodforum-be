@@ -1,5 +1,26 @@
 const jwt = require('jsonwebtoken');
 
+const optionalVerifyToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+            if (err) {
+                // Nếu token không hợp lệ, vẫn cho qua như guest
+                req.user = undefined;
+                return next();
+            }
+            req.user = user;
+            next();
+        });
+    } else {
+        req.user = undefined;
+        next();
+    }
+};
+
+module.exports.optionalVerifyToken = optionalVerifyToken;
+
 exports.verifyToken = (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
 

@@ -71,11 +71,11 @@ app.use(cors(corsOptions));
 
 // 7. Middleware
 app.use(helmet());
-app.use(rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    message: 'Too many requests from this IP, please try again later.'
-}));
+// app.use(rateLimit({
+//     windowMs: 15 * 60 * 1000,
+//     max: 100,
+//     message: 'Too many requests from this IP, please try again later.'
+// }));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

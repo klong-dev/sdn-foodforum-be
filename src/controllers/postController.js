@@ -18,9 +18,6 @@ exports.createPost = async (req, res) => {
             try { instructions = JSON.parse(instructions); } catch { return res.status(400).json({ message: 'Invalid instructions format' }); }
         }
 
-        console.log(typeof ingredients);
-        console.log(typeof instructions);
-
         // Dữ liệu đã được validate và chuẩn hóa bởi middleware
         const {
             title,
@@ -64,7 +61,8 @@ exports.createPost = async (req, res) => {
             notes: notes ? notes.trim() : '',
             notes_normalized: notes ? normalizeForSearch(notes) : '',
             categories,
-            slug
+            slug,
+            status: 'pending' // Set trạng thái mặc định là pending
         });
 
 
@@ -83,28 +81,30 @@ exports.getPostBySlug = async (req, res) => {
             .populate('categories');
         if (!post) return res.status(404).json({ message: 'Post not found' });
 
-        // Logic tránh tăng viewsCount nếu cùng user xem lại trong thời gian ngắn
-        const currentTime = new Date();
-        const fiveMinutesAgo = new Date(currentTime.getTime() - 5 * 60 * 1000); // 5 phút trước
+        // Chỉ tăng viewsCount nếu post đã được duyệt (approved) và user không phải admin
+        if (post.status === 'approved' && (!req.user || req.user.role !== 'admin')) {
+            const currentTime = new Date();
+            const fiveMinutesAgo = new Date(currentTime.getTime() - 5 * 60 * 1000); // 5 phút trước
 
-        // Kiểm tra xem user này đã xem post này trong 5 phút gần đây chưa
-        const recentView = await Post.findOne({
-            _id: post._id,
-            'recentViews.user': req.user?.id || req.ip, // Dùng user ID nếu đã login, hoặc IP nếu chưa login
-            'recentViews.viewedAt': { $gte: fiveMinutesAgo }
-        });
-
-        // Chỉ tăng viewsCount nếu user chưa xem trong 5 phút gần đây
-        if (!recentView) {
-            await Post.findByIdAndUpdate(post._id, {
-                $inc: { viewsCount: 1 },
-                $push: {
-                    recentViews: {
-                        user: req.user?.id || req.ip,
-                        viewedAt: currentTime
-                    }
-                }
+            // Kiểm tra xem user này đã xem post này trong 5 phút gần đây chưa
+            const recentView = await Post.findOne({
+                _id: post._id,
+                'recentViews.user': req.user?.id || req.ip,
+                'recentViews.viewedAt': { $gte: fiveMinutesAgo }
             });
+
+            // Chỉ tăng viewsCount nếu user chưa xem trong 5 phút gần đây
+            if (!recentView) {
+                await Post.findByIdAndUpdate(post._id, {
+                    $inc: { viewsCount: 1 },
+                    $push: {
+                        recentViews: {
+                            user: req.user?.id || req.ip,
+                            viewedAt: currentTime
+                        }
+                    }
+                });
+            }
         }
 
         res.json(post);
@@ -120,10 +120,14 @@ exports.getAllPosts = async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        console.log(req.query);
 
         // Build query
         let query = { 'deleted.isDeleted': { $ne: true } };
+
+        // Nếu không phải admin và không truyền ?allStatus=true thì chỉ lấy bài đã duyệt (approved)
+        if (!req.user || req.user.role !== 'admin' || req.query.allStatus !== 'true') {
+            query.status = 'approved';
+        }
 
         // Search - Full-text search trên các trường normalized
         if (req.query.search) {
@@ -291,10 +295,11 @@ exports.getAllPosts = async (req, res) => {
                 .sort(sort)
                 .skip(skip)
                 .limit(limit)
-                .lean(),
+                .lean()
+            ,
             Post.countDocuments(query)
         ]);
-        
+
         // Đếm số lượng comment cho từng post
         const postsWithCommentsCount = await Promise.all(
             posts.map(async post => {
@@ -302,12 +307,12 @@ exports.getAllPosts = async (req, res) => {
                 return { ...post, commentsCount };
             })
         );
-        
+
         // Calculate pagination metadata
         const totalPages = Math.ceil(totalPosts / limit);
         const hasNextPage = page < totalPages;
         const hasPrevPage = page > 1;
-        
+
         // Highlight search results if search term exists
         let highlightedPosts = postsWithCommentsCount;
         if (req.query.search) {
@@ -344,7 +349,9 @@ exports.getAllPosts = async (req, res) => {
                 return highlighted;
             });
         }
-        
+
+        // console.log('highlightedPosts: ', highlightedPosts)
+
         // Response format
         res.json({
             posts: highlightedPosts,
@@ -430,6 +437,113 @@ exports.downvotePost = async (req, res) => {
         res.json({ message: 'Downvote updated', upvotes, downvotes });
     } catch (error) {
         res.status(500).json({ message: 'Failed to downvote post', error: error.message });
+    }
+};
+
+// Thêm controller duyệt và từ chối post cho admin
+exports.approvePost = async (req, res) => {
+    try {
+        if (!req.user || req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Forbidden: Only admin can approve posts.' });
+        }
+        const post = await Post.findByIdAndUpdate(
+            req.params.id,
+            { status: 'approved' },
+            { new: true }
+        );
+        if (!post) return res.status(404).json({ message: 'Post not found' });
+        res.json({ message: 'Post approved successfully', post });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to approve post', error: error.message });
+    }
+};
+
+exports.rejectPost = async (req, res) => {
+    try {
+        if (!req.user || req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Forbidden: Only admin can reject posts.' });
+        }
+        const reason = req.body.reason || '';
+        const post = await Post.findByIdAndUpdate(
+            req.params.id,
+            { status: 'rejected', rejectedReason: reason },
+            { new: true }
+        );
+        if (!post) return res.status(404).json({ message: 'Post not found' });
+        res.json({ message: 'Post rejected successfully', post });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to reject post', error: error.message });
+    }
+};
+
+exports.getPostsByUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        let query = { author: userId, 'deleted.isDeleted': { $ne: true } };
+
+        // Nếu là chính chủ, cho phép filter theo status nếu có query
+        if (req.user && req.user.id === userId) {
+            if (req.query.status) {
+                query.status = req.query.status;
+            }
+        } else {
+            // Người khác chỉ thấy bài đã duyệt
+            query.status = 'approved';
+        }
+
+        // Lấy danh sách post
+        const posts = await Post.find(query)
+            .populate('author', '-password')
+            .populate('categories')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        // Đếm số lượng comment cho từng post
+        const postsWithCommentsCount = await Promise.all(
+            posts.map(async post => {
+                const commentsCount = await Comment.countDocuments({ post: post._id });
+                return { ...post, commentsCount };
+            })
+        );
+
+        res.json(postsWithCommentsCount);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to get user posts', error: error.message });
+    }
+};
+
+exports.getPostById = async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id)
+            .populate('author', '-password')
+            .populate('categories');
+        if (!post) return res.status(404).json({ message: 'Post not found' });
+
+        // Chỉ tăng viewsCount nếu post đã được duyệt (approved) và user không phải admin
+        if (post.status === 'approved' && (!req.user || req.user.role !== 'admin')) {
+            const currentTime = new Date();
+            const fiveMinutesAgo = new Date(currentTime.getTime() - 5 * 60 * 1000);
+            const recentView = await Post.findOne({
+                _id: post._id,
+                'recentViews.user': req.user?.id || req.ip,
+                'recentViews.viewedAt': { $gte: fiveMinutesAgo }
+            });
+            if (!recentView) {
+                await Post.findByIdAndUpdate(post._id, {
+                    $inc: { viewsCount: 1 },
+                    $push: {
+                        recentViews: {
+                            user: req.user?.id || req.ip,
+                            viewedAt: currentTime
+                        }
+                    }
+                });
+            }
+        }
+
+        res.json(post);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to get post', error: error.message });
     }
 };
 

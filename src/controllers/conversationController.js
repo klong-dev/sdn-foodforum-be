@@ -9,6 +9,17 @@ exports.createConversation = async (req, res) => {
         const firstMessage = req.body.firstMessage || '';
         const currentUserId = req.user.id;
 
+        // Kiểm tra chỉ cho phép chat với bạn bè
+        const user = await User.findById(currentUserId);
+        if (!user.friends.map(id => id.toString()).includes(participantId)) {
+            return res.status(403).json({ error: 'Chỉ có thể chat với bạn bè.' });
+        }
+        // Đảm bảo ngược lại cũng đúng (participant đã kết bạn với user)
+        const participant = await User.findById(participantId);
+        if (!participant.friends.map(id => id.toString()).includes(currentUserId)) {
+            return res.status(403).json({ error: 'Chỉ có thể chat với bạn bè.' });
+        }
+
         // Extract content from firstMessage if it's an object
         let messageContent = '';
         let messageType = 'text';

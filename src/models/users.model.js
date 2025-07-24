@@ -59,7 +59,12 @@ const userSchema = new Schema({
         default: '',
         trim: true,
         maxlength: [300, 'Bio cannot be more than 300 characters']
-    }
+    },
+    friends: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: []
+    }]
 }, {
     timestamps: true
 });

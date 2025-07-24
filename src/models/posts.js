@@ -36,8 +36,12 @@ const postSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ['active', 'inactive', 'closed', 'deleted', 'archived', 'pending', 'spam', 'flagged'],
-        default: 'active'
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending'
+    },
+    rejectedReason: {
+        type: String,
+        default: ''
     },
     slug: {
         type: String,
@@ -107,6 +111,10 @@ const postSchema = new Schema({
     notes_normalized: {
         type: String,
         trim: true
+    },
+    bio: {
+        type: String,
+        default: ''
     },
     categories: {
         type: [mongoose.Schema.Types.ObjectId],
